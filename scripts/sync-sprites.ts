@@ -4,7 +4,8 @@ import showdownPkg from "pokemon-showdown";
 
 const { Dex } = showdownPkg;
 
-const gen3 = Dex.forGen(3);
+// Gen 4 Pokédex: resolves the dex number of every species up to Arceus.
+const dex = Dex.forGen(4);
 
 const root = process.cwd();
 const sourceFront = path.join(root, "assets", "gen3");
@@ -35,7 +36,7 @@ function syncDirectory(sourceDir: string, targetDirs: string[]) {
     if (!fs.statSync(srcPath).isFile()) continue;
 
     const base = file.replace(/\.png$/, "");
-    const s = gen3.species.get(base);
+    const s = dex.species.get(base);
 
     for (const targetDir of targetDirs) {
       // 1. Arquivo pelo nome (ex: pikachu.png)

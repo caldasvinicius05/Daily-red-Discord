@@ -28,7 +28,7 @@ Batalhas são **sem estado em memória**: guardar seed + ações e refazer no Sh
 
 ## Visual
 
-- Sprites dos Pokémon são servidos a partir de `public/sprites/` (`gen3` para frente e `gen3-back` para costas). `PokemonEmblem.tsx` é a única peça visual que renderiza um Pokémon, recebendo a espécie e o lado da arena (`side`) para determinar a perspectiva.
+- Sprites dos Pokémon (fora do repositório por enquanto; guia em `docs/SPRITES.md`) são servidos a partir de `public/sprites/` (`gen3` para frente e `gen3-back` para costas). `PokemonEmblem.tsx` é a única peça visual que renderiza um Pokémon, recebendo a espécie e o lado da arena (`side`) para determinar a perspectiva.
 - Fontes: `--font-ui` (Outfit) para textos e **números**; `--font-pixel` só na narração e em títulos curtos; `--font-logo` no logo.
 - Números com `font-variant-numeric: tabular-nums`.
 - Animações: só `transform`/`opacity` em loops infinitos; evitar `backdrop-filter` e `filter` animados (causaram lentidão).

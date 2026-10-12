@@ -19,3 +19,7 @@ next-env.d.ts
 .DS_Store
 Thumbs.db
 npm-debug.log*
+
+# sprites (removed from the repo; see docs/SPRITES.md)
+assets/
+public/sprites/

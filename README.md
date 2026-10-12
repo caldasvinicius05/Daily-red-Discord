@@ -148,4 +148,4 @@ Cada push na branch `master` gera um novo deploy automaticamente. O login de tes
 - **Rodízio dos campeões:** [`src/domain/rules/championRotation.ts`](src/domain/rules/championRotation.ts).
 - **Fuso do "dia" e data de lançamento:** [`src/domain/rules/gameDate.ts`](src/domain/rules/gameDate.ts).
 - **IA dos campeões:** [`src/infrastructure/showdown/redAI.ts`](src/infrastructure/showdown/redAI.ts).
-- **Visual dos Pokémon:** [`src/ui/components/PokemonEmblem.tsx`](src/ui/components/PokemonEmblem.tsx) é o único componente que desenha um Pokémon em todas as telas.
+- **Visual dos Pokémon:** [`src/ui/components/PokemonEmblem.tsx`](src/ui/components/PokemonEmblem.tsx) é o único componente que desenha um Pokémon em todas as telas. Os sprites não ficam no repositório; veja o [guia de sprites](docs/SPRITES.md) para adicioná-los.
