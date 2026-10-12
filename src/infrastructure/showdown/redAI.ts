@@ -37,8 +37,14 @@ function field(battle: Battle): Field {
 
 /** Expected damage of a move as a fraction of the target's current HP (capped at 1), plus whether it surely KOs. */
 function damage(battle: Battle, attacker: Pokemon, defender: Pokemon, moveName: string) {
-  const result = calculate(gen, toCalc(attacker), toCalc(defender), new Move(gen, moveName), field(battle));
-  const [min, max] = result.range();
+  let min = 0;
+  let max = 0;
+  try {
+    [min, max] = calculate(gen, toCalc(attacker), toCalc(defender), new Move(gen, moveName), field(battle)).range();
+  } catch {
+    // The calc doesn't know some rare combinations; better a weak guess than a crashed battle.
+    return { fraction: 0, surelyKOs: false };
+  }
   const avg = (min + max) / 2;
   // A fainted defender (both sides went down in the same turn) has 0 HP: nothing to score.
   if (defender.hp <= 0) return { fraction: 0, surelyKOs: false };

@@ -1,24 +1,28 @@
 import { describe, expect, it } from "vitest";
 import type { BattleEvent } from "@/domain";
-import { generateDailyTeam } from "@/domain";
+import { ShowdownTeamFactory } from "@/infrastructure/showdown/ShowdownTeamFactory";
 import { ShowdownBattleEngine } from "@/infrastructure/showdown/ShowdownBattleEngine";
 import { buildBattleLog } from "./logEntries";
+
+// Each side has one Pokémon on the field in this hand-written sequence.
+const SLOT_player = 0;
+const SLOT_red = 0;
 
 describe("buildBattleLog", () => {
   it("shows how much HP changed, per side, and classifies sources", () => {
     const events: BattleEvent[] = [
-      { kind: "switch", side: "player", species: "Kingdra", hp: 292, maxHp: 292, text: "Vai, Kingdra!" },
-      { kind: "switch", side: "red", species: "Pikachu", hp: 100, maxHp: 100, text: "Red enviou Pikachu!" },
+      { kind: "switch", side: "player", slot: SLOT_player, species: "Kingdra", hp: 292, maxHp: 292, text: "Vai, Kingdra!" },
+      { kind: "switch", side: "red", slot: SLOT_red, species: "Pikachu", hp: 100, maxHp: 100, text: "Red enviou Pikachu!" },
       { kind: "turn", turn: 1, text: "Turno 1" },
-      { kind: "move", side: "red", species: "Pikachu", move: "Thunderbolt", text: "Pikachu do Red usou Thunderbolt!" },
-      { kind: "hp", side: "player", species: "Kingdra", hp: 205, maxHp: 292, change: "damage" },
-      { kind: "move", side: "player", species: "Kingdra", move: "Surf", text: "Kingdra usou Surf!" },
+      { kind: "move", side: "red", slot: SLOT_red, species: "Pikachu", move: "Thunderbolt", text: "Pikachu do Red usou Thunderbolt!" },
+      { kind: "hp", side: "player", slot: SLOT_player, species: "Kingdra", hp: 205, maxHp: 292, change: "damage" },
+      { kind: "move", side: "player", slot: SLOT_player, species: "Kingdra", move: "Surf", text: "Kingdra usou Surf!" },
       { kind: "message", text: "Um golpe crítico!", tag: "hit" },
-      { kind: "hp", side: "red", species: "Pikachu", hp: 34, maxHp: 100, change: "damage" },
-      { kind: "status", side: "player", species: "Kingdra", status: "par", text: "Kingdra foi paralisado!" },
-      { kind: "hp", side: "player", species: "Kingdra", hp: 223, maxHp: 292, change: "heal", text: "Kingdra recuperou HP com Leftovers.", source: "item" },
-      { kind: "boost", side: "red", species: "Pikachu", stat: "atk", amount: -1, text: "Ataque de Pikachu do Red caiu!" },
-      { kind: "faint", side: "red", species: "Pikachu", text: "Pikachu do Red desmaiou!" },
+      { kind: "hp", side: "red", slot: SLOT_red, species: "Pikachu", hp: 34, maxHp: 100, change: "damage" },
+      { kind: "status", side: "player", slot: SLOT_player, species: "Kingdra", status: "par", text: "Kingdra foi paralisado!" },
+      { kind: "hp", side: "player", slot: SLOT_player, species: "Kingdra", hp: 223, maxHp: 292, change: "heal", text: "Kingdra recuperou HP com Leftovers.", source: "item" },
+      { kind: "boost", side: "red", slot: SLOT_red, species: "Pikachu", stat: "atk", amount: -1, text: "Ataque de Pikachu do Red caiu!" },
+      { kind: "faint", side: "red", slot: SLOT_red, species: "Pikachu", text: "Pikachu do Red desmaiou!" },
     ];
     const log = buildBattleLog(events);
 
@@ -34,7 +38,7 @@ describe("buildBattleLog", () => {
 
   it("covers a whole real battle without empty lines", () => {
     const engine = new ShowdownBattleEngine();
-    const setup = { seed: "log-test", team: generateDailyTeam("2026-10-12"), leadIndex: 0 };
+    const setup = { seed: "log-test", championId: "lance", team: new ShowdownTeamFactory().dailyTeam("2026-10-12"), leadIndex: 0 };
     const actions = [];
     let snap = engine.simulate(setup, []);
     while (snap.view.phase !== "ended" && actions.length < 80) {

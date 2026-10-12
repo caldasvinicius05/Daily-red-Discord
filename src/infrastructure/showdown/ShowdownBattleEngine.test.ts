@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { InvalidActionError } from "@/application/errors";
 import type { BattleSetup } from "@/application/ports";
-import { addDays, generateDailyTeam, type BattleView, type PlayerAction } from "@/domain";
+import { addDays, CHAMPIONS, type BattleView, type PlayerAction } from "@/domain";
 import { createRandom } from "@/domain/rules/random";
 import { ShowdownBattleEngine } from "./ShowdownBattleEngine";
+import { ShowdownTeamFactory } from "./ShowdownTeamFactory";
 
 const engine = new ShowdownBattleEngine();
-const setup: BattleSetup = { seed: "test-seed", team: generateDailyTeam("2026-10-12"), leadIndex: 0 };
+const teams = new ShowdownTeamFactory();
+const setup: BattleSetup = { seed: "test-seed", championId: "red", team: teams.dailyTeam("2026-10-12"), leadIndex: 0 };
 
 /** Simple player: always the first usable move, first available switch when forced. */
 function nextAction(view: BattleView): PlayerAction {
@@ -100,7 +102,9 @@ describe("ShowdownBattleEngine", () => {
       const random = createRandom(`fuzz-${n}`);
       const s: BattleSetup = {
         seed: `fuzz-${n}`,
-        team: generateDailyTeam(addDays("2026-10-12", n)),
+        // Every champion, and a different generated team each time.
+        championId: CHAMPIONS[n % CHAMPIONS.length]!.id,
+        team: teams.dailyTeam(addDays("2026-10-12", n)),
         leadIndex: n % 6,
       };
       const actions: PlayerAction[] = [];
@@ -120,6 +124,28 @@ describe("ShowdownBattleEngine", () => {
       expect(snapshot.outcome).not.toBeNull();
     }
   }, 120_000);
+
+  it("tells apart a champion's repeated species (Lance's three Dragonite)", () => {
+    const lance: BattleSetup = { ...setup, seed: "lance-dupes", championId: "lance" };
+    const { snapshot } = playToEnd(lance);
+    const steps = snapshot.steps.flat();
+    // Each Dragonite slot (1, 2 and 5) that came out is tracked under its own slot.
+    const dragoniteSlots = new Set(steps.flatMap((e) => (e.kind === "switch" && e.side === "red" && e.species === "Dragonite" ? [e.slot] : [])));
+    for (const slot of dragoniteSlots) expect([1, 2, 5]).toContain(slot);
+    // A faint on one Dragonite never marks another one as fainted.
+    const faintedSlots = steps.flatMap((e) => (e.kind === "faint" && e.side === "red" ? [e.slot] : []));
+    expect(new Set(faintedSlots).size).toBe(faintedSlots.length);
+    snapshot.outcome!.redFainted.forEach((fainted, slot) => expect(fainted).toBe(faintedSlots.includes(slot)));
+    // Revealed Pokémon in the view line up with their own slots.
+    snapshot.view.red.team.forEach((mon, slot) => {
+      if (mon) expect(mon.species).toBe(CHAMPIONS.find((c) => c.id === "lance")!.team[slot]!.species);
+    });
+  });
+
+  it("uses the champion's name in the narration", () => {
+    const { steps } = engine.simulate({ ...setup, championId: "steven" }, []);
+    expect(steps.flat().map((e) => e.text)).toContain("Steven enviou Skarmory!");
+  });
 
   it("narrates in Portuguese", () => {
     const { steps } = engine.simulate(setup, [{ type: "move", move: 0 }]);

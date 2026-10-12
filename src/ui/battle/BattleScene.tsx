@@ -43,8 +43,8 @@ function BoostChips({ boosts }: { boosts: Boosts }) {
   );
 }
 
-/** Six pips: one per Pokémon. Red's unrevealed ones stay hollow. */
-function PartyPips({ mons, total = 6 }: { mons: MonDisplay[]; total?: number }) {
+/** Six pips, one per team slot. The champion's unrevealed Pokémon stay hollow. */
+function PartyPips({ mons, total = 6 }: { mons: (MonDisplay | undefined)[]; total?: number }) {
   return (
     <div className={styles.pips} aria-hidden="true">
       {Array.from({ length: total }, (_, i) => {
@@ -55,7 +55,7 @@ function PartyPips({ mons, total = 6 }: { mons: MonDisplay[]; total?: number }) 
   );
 }
 
-function InfoBox({ side, mon, party }: { side: BattleSide; mon: MonDisplay | undefined; party: MonDisplay[] }) {
+function InfoBox({ side, mon, party }: { side: BattleSide; mon: MonDisplay | undefined; party: (MonDisplay | undefined)[] }) {
   return (
     <div className={cx(styles.info, side === "red" ? styles.infoRed : styles.infoPlayer, !mon && styles.infoHidden)}>
       {mon && (
@@ -80,8 +80,8 @@ function InfoBox({ side, mon, party }: { side: BattleSide; mon: MonDisplay | und
 const ALL_EFFECT_CLASSES = Object.values(EFFECT_CLASS).map((name) => styles[name]!);
 
 /**
- * One side's Pokémon on the field. Mounted once per species (the parent keys it by
- * species); effects are applied to an inner layer by toggling a class directly, so the
+ * One side's Pokémon on the field. Mounted once per team slot (the parent keys it by
+ * slot); effects are applied to an inner layer by toggling a class directly, so the
  * emblem is never rebuilt and its idle animations keep running smoothly.
  */
 function Combatant({ side, mon, effect }: { side: BattleSide; mon: MonDisplay | undefined; effect: ActiveEffect | null }) {
@@ -116,20 +116,12 @@ function Combatant({ side, mon, effect }: { side: BattleSide; mon: MonDisplay | 
   );
 }
 
-export function BattleScene({
-  display,
-  effect,
-  playerOrder,
-  redOrder,
-}: {
-  display: DisplayState;
-  effect: ActiveEffect | null;
-  /** Species in team order, to draw the party pips. */
-  playerOrder: string[];
-  redOrder: string[];
-}) {
-  const playerMon = display.player.active ? display.player.mons[display.player.active] : undefined;
-  const redMon = display.red.active ? display.red.mons[display.red.active] : undefined;
+const SLOTS = [0, 1, 2, 3, 4, 5];
+
+export function BattleScene({ display, effect }: { display: DisplayState; effect: ActiveEffect | null }) {
+  // Slot 0 is a real slot, so compare with null rather than relying on truthiness.
+  const playerMon = display.player.active !== null ? display.player.mons[display.player.active] : undefined;
+  const redMon = display.red.active !== null ? display.red.mons[display.red.active] : undefined;
   const weather = display.weather ? WEATHER_CLASS[display.weather] : null;
 
   return (
@@ -146,11 +138,11 @@ export function BattleScene({
       <div className={cx(styles.platform, styles.platformRed)} />
       <div className={cx(styles.platform, styles.platformPlayer)} />
 
-      <Combatant key={`red-${redMon?.species}`} side="red" mon={redMon} effect={effect} />
-      <Combatant key={`player-${playerMon?.species}`} side="player" mon={playerMon} effect={effect} />
+      <Combatant key={`red-${display.red.active}`} side="red" mon={redMon} effect={effect} />
+      <Combatant key={`player-${display.player.active}`} side="player" mon={playerMon} effect={effect} />
 
-      <InfoBox side="red" mon={redMon} party={redOrder.map((s) => display.red.mons[s]!).filter(Boolean)} />
-      <InfoBox side="player" mon={playerMon} party={playerOrder.map((s) => display.player.mons[s]!).filter(Boolean)} />
+      <InfoBox side="red" mon={redMon} party={SLOTS.map((slot) => display.red.mons[slot])} />
+      <InfoBox side="player" mon={playerMon} party={SLOTS.map((slot) => display.player.mons[slot])} />
     </div>
   );
 }

@@ -24,7 +24,7 @@
 }
 
 .logoRed {
-  font-size: 26px;
+  font-size: 19px;
   color: var(--red);
   margin-top: 6px;
   text-shadow:
@@ -40,7 +40,7 @@
   font-size: 8px;
 }
 .logo-sm .logoRed {
-  font-size: 17px;
+  font-size: 13px;
   margin-top: 4px;
 }
 
@@ -52,7 +52,7 @@
   font-size: 14px;
 }
 .logo-lg .logoRed {
-  font-size: 40px;
+  font-size: 30px;
   margin-top: 8px;
 }
 

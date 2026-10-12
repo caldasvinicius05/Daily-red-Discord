@@ -1,8 +1,8 @@
 @AGENTS.md
 
-# Daily Red — guia para agentes
+# Daily Battle — guia para agentes
 
-Atividade do Discord: uma batalha Pokémon diária contra o Red, para um servidor privado de amigos. Visão geral, setup e deploy estão no [README.md](README.md).
+Atividade do Discord: uma batalha Pokémon diária contra um campeão (Gen 1–3, sem repetir na semana), para um servidor privado de amigos. Visão geral, setup e deploy estão no [README.md](README.md).
 
 ## Idioma
 
@@ -17,6 +17,8 @@ Atividade do Discord: uma batalha Pokémon diária contra o Red, para um servido
 - `src/infrastructure` — implementações dos ports. `container.ts` é o único lugar que liga ports a implementações.
 - `src/app` — Next.js: páginas e Route Handlers. Rotas usam `handle()`/`requireSession()`/`parseBody()` de `src/app/api/_lib/http.ts` e chamam só casos de uso.
 - `src/ui` — React. O cliente importa do servidor apenas **tipos** (`import type`), nunca código de infraestrutura.
+
+Pokémon na batalha são identificados pela **posição no time** (`slot`, apelido `m0`…`m5` no Showdown), nunca pela espécie — campeões podem repetir espécies (três Dragonite do Lance). No código, o lado do campeão ainda se chama `red` (e o resultado `redFainted`), por compatibilidade.
 
 Batalhas são **sem estado em memória**: guardar seed + ações e refazer no Showdown a cada requisição (`ShowdownBattleEngine.simulate`). A diária usa a mesma seed para todos.
 
@@ -44,7 +46,7 @@ npm run db:generate    # nova migration após mudar src/infrastructure/db/schema
 - **Windows não diferencia maiúsculas em nomes de arquivo:** não criar `foo.ts` e `Foo.tsx` na mesma pasta.
 - **Migrations em produção:** são lidas do disco; `outputFileTracingIncludes` em `next.config.ts` garante que entrem no deploy da Vercel.
 - **SQLite local:** `prepareDatabase` liga WAL + `synchronous=NORMAL` (sem isso cada jogada levava ~150 ms no Windows).
-- **Discord:** a sessão é token Bearer (cookies falham no iframe). `allowedDevOrigins` libera o túnel e `*.discordsays.com` no dev. O comando `/dailyred` é registrado por POST individual para não apagar o comando "Launch" da atividade.
+- **Discord:** a sessão é token Bearer (cookies falham no iframe). `allowedDevOrigins` libera o túnel e `*.discordsays.com` no dev. O comando `/dailybattle` é registrado por POST individual para não apagar o comando "Launch" da atividade.
 - **Variáveis de ambiente na Vercel:** mudanças só valem após *Redeploy*.
 
 ## Fluxo de trabalho

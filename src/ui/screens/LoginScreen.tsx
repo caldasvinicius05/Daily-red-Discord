@@ -28,7 +28,7 @@ export function LoginScreen({ onLogin }: { onLogin: (name: string) => Promise<vo
     <main className={styles.center}>
       <form className={styles.loginCard} onSubmit={submit}>
         <Logo size="lg" />
-        <p className={styles.tagline}>Uma batalha por dia contra o Red, no topo do Monte Prateado.</p>
+        <p className={styles.tagline}>Uma batalha por dia contra um campeão. Mesmo time para todo o servidor.</p>
 
         <div className={styles.devBadge}>
           <span className={styles.devDot} /> Modo local · fora do Discord

@@ -130,6 +130,19 @@
   color: var(--text-dim);
 }
 
+.practiceNote {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.practiceNote strong {
+  font-size: 15px;
+  color: var(--ice);
+}
+
 .confirm {
   display: flex;
   align-items: center;

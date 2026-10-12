@@ -102,8 +102,8 @@ export function BattleScreen({ initial, onExit, onPractice }: Props) {
           ? "Escolha o próximo Pokémon."
           : `O que ${activeMon?.species ?? "seu Pokémon"} vai fazer?`;
 
-  const redActive = playback.display.red.active;
-  const redOrder = view.red.team.flatMap((m) => (m ? [m.species] : []));
+  const championSlot = playback.display.red.active;
+  const championActive = championSlot !== null ? playback.display.red.mons[championSlot]?.species : undefined;
   // The whole line must be readable well before the event's hold time ends.
   const typingSpeed = settings.speed === "instant" ? 0 : settings.speed === "fast" ? 6 : 12;
 
@@ -118,6 +118,7 @@ export function BattleScreen({ initial, onExit, onPractice }: Props) {
             <span className={cx(styles.modeChip, battle.mode === "daily" ? styles.modeDaily : styles.modePractice, "pixel")}>
               {battle.mode === "daily" ? `DIÁRIA #${battle.challengeNumber}` : "TREINO"}
             </span>
+            <span className={styles.vsChampion}>vs {battle.champion.name}</span>
             <span className={styles.turn}>Turno {Math.max(1, playback.display.turn)}</span>
           </div>
           <div className={styles.hudRight}>
@@ -144,8 +145,6 @@ export function BattleScreen({ initial, onExit, onPractice }: Props) {
           <BattleScene
             display={playback.display}
             effect={playback.effect}
-            playerOrder={view.player.team.map((m) => m.species)}
-            redOrder={redOrder}
           />
           {(partyOpen || forcedSwitch) && (
             <PartyPanel
@@ -171,7 +170,7 @@ export function BattleScreen({ initial, onExit, onPractice }: Props) {
         {!ended && (
           <MovePanel
             moves={view.choices.moves}
-            targetTypes={redActive ? typesOf(redActive) : null}
+            targetTypes={championActive ? typesOf(championActive) : null}
             disabled={!idle || view.phase !== "move"}
             canSwitch={view.choices.switches.length > 0}
             onMove={(move) => act({ type: "move", move })}

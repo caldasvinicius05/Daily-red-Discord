@@ -10,9 +10,10 @@ export interface MonDisplay {
   boosts: Boosts;
 }
 
+/** Keyed by team slot, not species: a team may have the same species twice (Lance). */
 export interface SideDisplay {
-  active: string | null;
-  mons: Record<string, MonDisplay>;
+  active: number | null;
+  mons: Record<number, MonDisplay>;
 }
 
 export interface DisplayState {
@@ -31,9 +32,9 @@ export const EMPTY_DISPLAY: DisplayState = {
 
 /** Authoritative state after a turn (also used when reopening a battle). */
 export function displayFromView(view: BattleView): DisplayState {
-  const player: SideDisplay = { active: view.player.team[view.player.active]?.species ?? null, mons: {} };
-  for (const mon of view.player.team) {
-    player.mons[mon.species] = {
+  const player: SideDisplay = { active: view.player.active, mons: {} };
+  view.player.team.forEach((mon, slot) => {
+    player.mons[slot] = {
       species: mon.species,
       hp: mon.hp,
       maxHp: mon.maxHp,
@@ -41,12 +42,12 @@ export function displayFromView(view: BattleView): DisplayState {
       fainted: mon.fainted,
       boosts: mon.boosts,
     };
-  }
+  });
 
-  const red: SideDisplay = { active: null, mons: {} };
-  view.red.team.forEach((mon, i) => {
+  const red: SideDisplay = { active: view.red.active, mons: {} };
+  view.red.team.forEach((mon, slot) => {
     if (!mon) return;
-    red.mons[mon.species] = {
+    red.mons[slot] = {
       species: mon.species,
       hp: mon.hpPercent,
       maxHp: 100,
@@ -54,17 +55,21 @@ export function displayFromView(view: BattleView): DisplayState {
       fainted: mon.fainted,
       boosts: mon.boosts,
     };
-    if (view.red.active === i) red.active = mon.species;
   });
 
   return { turn: view.turn, weather: view.weather, player, red };
 }
 
-function updateMon(state: DisplayState, side: BattleSide, species: string, patch: (mon: MonDisplay) => Partial<MonDisplay>): DisplayState {
-  const current = state[side].mons[species] ?? { species, hp: 0, maxHp: 100, status: null, fainted: false, boosts: {} };
+function updateMon(
+  state: DisplayState,
+  who: { side: BattleSide; slot: number; species: string },
+  patch: (mon: MonDisplay) => Partial<MonDisplay>,
+): DisplayState {
+  const { side, slot, species } = who;
+  const current = state[side].mons[slot] ?? { species, hp: 0, maxHp: 100, status: null, fainted: false, boosts: {} };
   return {
     ...state,
-    [side]: { ...state[side], mons: { ...state[side].mons, [species]: { ...current, ...patch(current) } } },
+    [side]: { ...state[side], mons: { ...state[side].mons, [slot]: { ...current, ...patch(current) } } },
   };
 }
 
@@ -77,24 +82,28 @@ export function applyEvent(state: DisplayState, event: BattleEvent): DisplayStat
       return { ...state, weather: event.weather };
     case "switch": {
       // Switching out clears stat changes, like in the games.
-      const next = updateMon(state, event.side, event.species, () => ({
+      const next = updateMon(state, event, () => ({
         hp: event.hp,
         maxHp: event.maxHp,
         fainted: false,
         boosts: {},
       }));
       const leaving = state[event.side].active;
-      const cleared = leaving && leaving !== event.species ? updateMon(next, event.side, leaving, () => ({ boosts: {} })) : next;
-      return { ...cleared, [event.side]: { ...cleared[event.side], active: event.species } };
+      const leavingMon = leaving !== null ? state[event.side].mons[leaving] : undefined;
+      const cleared =
+        leaving !== null && leaving !== event.slot && leavingMon
+          ? updateMon(next, { side: event.side, slot: leaving, species: leavingMon.species }, () => ({ boosts: {} }))
+          : next;
+      return { ...cleared, [event.side]: { ...cleared[event.side], active: event.slot } };
     }
     case "hp":
-      return updateMon(state, event.side, event.species, () => ({ hp: event.hp, maxHp: event.maxHp }));
+      return updateMon(state, event, () => ({ hp: event.hp, maxHp: event.maxHp }));
     case "faint":
-      return updateMon(state, event.side, event.species, () => ({ hp: 0, fainted: true }));
+      return updateMon(state, event, () => ({ hp: 0, fainted: true }));
     case "status":
-      return updateMon(state, event.side, event.species, () => ({ status: event.status }));
+      return updateMon(state, event, () => ({ status: event.status }));
     case "boost":
-      return updateMon(state, event.side, event.species, (mon) => {
+      return updateMon(state, event, (mon) => {
         const stat = event.stat as keyof Boosts;
         const value = Math.max(-6, Math.min(6, (mon.boosts[stat] ?? 0) + event.amount));
         const boosts = { ...mon.boosts, [stat]: value };

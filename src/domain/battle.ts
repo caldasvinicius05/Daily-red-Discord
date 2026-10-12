@@ -12,25 +12,33 @@ export type MessageTag = "hit" | "item" | "ability" | "effect" | "status";
 
 export type HpSource = "item" | "status" | "weather" | "recoil" | "drain" | "effect";
 
+/**
+ * Identifies one Pokémon in a battle. `slot` is its index in that side's team, so two
+ * of the same species (Lance's Dragonite) are never confused; `species` is for display.
+ */
+interface Who {
+  side: BattleSide;
+  slot: number;
+  species: string;
+}
+
 /** One line of battle narration plus the structured data the UI animates from. */
 export type BattleEvent =
   | { kind: "turn"; turn: number; text: string }
-  | { kind: "switch"; side: BattleSide; species: string; hp: number; maxHp: number; text: string }
-  | { kind: "move"; side: BattleSide; species: string; move: string; text: string }
-  | {
+  | ({ kind: "switch"; hp: number; maxHp: number; text: string } & Who)
+  | ({ kind: "move"; move: string; text: string } & Who)
+  | ({
       kind: "hp";
-      side: BattleSide;
-      species: string;
       hp: number;
       maxHp: number;
       change: "damage" | "heal";
       text?: string;
       /** What caused it when it isn't the last move: an item, poison, weather, recoil... */
       source?: HpSource;
-    }
-  | { kind: "faint"; side: BattleSide; species: string; text: string }
-  | { kind: "status"; side: BattleSide; species: string; status: string | null; text: string }
-  | { kind: "boost"; side: BattleSide; species: string; stat: string; amount: number; text: string }
+    } & Who)
+  | ({ kind: "faint"; text: string } & Who)
+  | ({ kind: "status"; status: string | null; text: string } & Who)
+  | ({ kind: "boost"; stat: string; amount: number; text: string } & Who)
   | { kind: "weather"; weather: string | null; text: string }
   | { kind: "message"; text: string; tag?: MessageTag }
   | { kind: "end"; winner: BattleSide | null; text: string };

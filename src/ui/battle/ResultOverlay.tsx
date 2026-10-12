@@ -46,10 +46,10 @@ export function ResultOverlay({ battle, onHome, onPractice }: { battle: BattleDT
 
   const title = result.won ? "VITÓRIA!" : result.abandoned ? "DESISTÊNCIA" : "DERROTA";
   const subtitle = result.won
-    ? "Você derrotou o Red no topo do Monte Prateado."
+    ? `Você derrotou ${battle.champion.name} — ${battle.champion.location}.`
     : result.abandoned
       ? "A batalha ficou para trás. Amanhã tem outra."
-      : "O Red continua invicto... por enquanto.";
+      : `${battle.champion.name} continua invicto... por enquanto.`;
 
   return (
     <div className={styles.resultBackdrop}>
@@ -74,7 +74,7 @@ export function ResultOverlay({ battle, onHome, onPractice }: { battle: BattleDT
             <strong>{survivors}/6 de pé</strong>
           </div>
           <div>
-            <small>Time do Red</small>
+            <small>Time de {battle.champion.name}</small>
             <div className={styles.resultGrid}>
               {result.redFainted.map((down, i) => (
                 <span key={i} className={cx(styles.resultCell, down && styles.cellKo)} />

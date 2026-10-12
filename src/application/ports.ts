@@ -14,6 +14,8 @@ import type {
 
 export interface BattleSetup {
   seed: string;
+  /** Which champion the player faces (see `CHAMPIONS`). */
+  championId: string;
   team: Team;
   /** Team index of the Pokémon sent out first. */
   leadIndex: number;
@@ -81,6 +83,27 @@ export interface PlayerRepository {
   findByIds(ids: readonly string[]): Promise<Player[]>;
 }
 
+// ---------- Teams ----------
+
+export interface TeamFactory {
+  /** Every species the player's daily team can be drawn from. */
+  poolSpecies(): readonly string[];
+  /** The day's team: same date → same six Pokémon and builds, for everyone. */
+  dailyTeam(date: GameDate): Team;
+}
+
+/** Remembers which champion each day had, so a champion doesn't repeat within a week. */
+export interface DailyChampionRepository {
+  get(date: GameDate): Promise<string | null>;
+  /** Champions of every recorded date in [from, to], inclusive. */
+  listBetween(from: GameDate, to: GameDate): Promise<{ date: GameDate; championId: string }[]>;
+  /**
+   * Records `championId` for `date` unless one is already recorded, and returns the
+   * stored one — so two requests racing on a new day agree on the same champion.
+   */
+  claim(date: GameDate, championId: string): Promise<string>;
+}
+
 // ---------- Reference data (Pokédex) ----------
 
 export interface SpeciesInfo {
@@ -106,6 +129,10 @@ export interface Pokedex {
   move(name: string): MoveInfo;
   itemDescription(name: string): string;
   abilityDescription(name: string): string;
+  /** Every move, item and ability that exists in Gen 3 (names). */
+  allMoves(): readonly string[];
+  allItems(): readonly string[];
+  allAbilities(): readonly string[];
 }
 
 // ---------- Discord ----------
@@ -134,3 +161,6 @@ export interface Clock {
 export interface IdGenerator {
   next(): string;
 }
+
+/** Non-deterministic randomness (picking champions); seeded in tests. */
+export type RandomSource = () => number;

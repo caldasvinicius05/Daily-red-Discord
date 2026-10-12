@@ -52,7 +52,8 @@ const HP_SOURCE_ICON: Record<string, LogIcon> = {
 export function buildBattleLog(events: readonly BattleEvent[]): LogEntry[] {
   const entries: LogEntry[] = [];
   const lastHp = new Map<string, number>();
-  const key = (side: BattleSide, species: string) => `${side}:${species}`;
+  // Keyed by slot: two Pokémon of the same species must keep separate HP.
+  const key = (side: BattleSide, slot: number) => `${side}:${slot}`;
 
   for (const e of events) {
     switch (e.kind) {
@@ -61,7 +62,7 @@ export function buildBattleLog(events: readonly BattleEvent[]): LogEntry[] {
         break;
 
       case "switch":
-        lastHp.set(key(e.side, e.species), e.hp);
+        lastHp.set(key(e.side, e.slot), e.hp);
         entries.push({ kind: "line", icon: "switch", side: e.side, text: e.text });
         break;
 
@@ -70,7 +71,7 @@ export function buildBattleLog(events: readonly BattleEvent[]): LogEntry[] {
         break;
 
       case "hp": {
-        const k = key(e.side, e.species);
+        const k = key(e.side, e.slot);
         const before = lastHp.get(k) ?? e.maxHp;
         lastHp.set(k, e.hp);
         const delta = e.hp - before;
@@ -84,7 +85,7 @@ export function buildBattleLog(events: readonly BattleEvent[]): LogEntry[] {
       }
 
       case "faint":
-        lastHp.set(key(e.side, e.species), 0);
+        lastHp.set(key(e.side, e.slot), 0);
         entries.push({ kind: "line", icon: "faint", side: e.side, text: e.text });
         break;
 

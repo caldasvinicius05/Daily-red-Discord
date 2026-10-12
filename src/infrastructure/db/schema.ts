@@ -22,6 +22,8 @@ export const battles = sqliteTable(
     guildId: text("guild_id"),
     mode: text("mode").$type<BattleMode>().notNull(),
     date: text("date").notNull(),
+    /** Battles from before champions existed were all against Red. */
+    championId: text("champion_id").notNull().default("red"),
     seed: text("seed").notNull(),
     team: text("team", { mode: "json" }).$type<Team>().notNull(),
     leadIndex: integer("lead_index").notNull(),
@@ -39,3 +41,10 @@ export const battles = sqliteTable(
     index("battles_guild_date").on(t.guildId, t.date),
   ],
 );
+
+/** Which champion each day had; read to keep champions from repeating within a week. */
+export const dailyChampions = sqliteTable("daily_champions", {
+  date: text("date").primaryKey(),
+  championId: text("champion_id").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});

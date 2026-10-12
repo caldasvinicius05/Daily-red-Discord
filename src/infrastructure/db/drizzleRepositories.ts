@@ -1,9 +1,9 @@
-import { and, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, eq, gte, inArray, isNotNull, lte } from "drizzle-orm";
 import { ConflictError } from "@/application/errors";
-import type { BattleRecord, BattleRepository, Player, PlayerRepository } from "@/application/ports";
+import type { BattleRecord, BattleRepository, DailyChampionRepository, Player, PlayerRepository } from "@/application/ports";
 import type { BattleResult, GameDate } from "@/domain";
 import type { Database } from "./client";
-import { battles, players } from "./schema";
+import { battles, dailyChampions, players } from "./schema";
 
 type BattleRow = typeof battles.$inferSelect;
 
@@ -92,5 +92,28 @@ export class DrizzlePlayerRepository implements PlayerRepository {
       .select({ id: players.id, username: players.username, displayName: players.displayName, avatar: players.avatar })
       .from(players)
       .where(inArray(players.id, [...ids]));
+  }
+}
+
+export class DrizzleDailyChampionRepository implements DailyChampionRepository {
+  constructor(private readonly db: Database) {}
+
+  async get(date: GameDate): Promise<string | null> {
+    const row = await this.db.query.dailyChampions.findFirst({ where: eq(dailyChampions.date, date) });
+    return row?.championId ?? null;
+  }
+
+  async listBetween(from: GameDate, to: GameDate): Promise<{ date: GameDate; championId: string }[]> {
+    if (from > to) return [];
+    return this.db
+      .select({ date: dailyChampions.date, championId: dailyChampions.championId })
+      .from(dailyChampions)
+      .where(and(gte(dailyChampions.date, from), lte(dailyChampions.date, to)));
+  }
+
+  async claim(date: GameDate, championId: string): Promise<string> {
+    // First writer wins; a concurrent request that loses just reads the stored choice.
+    await this.db.insert(dailyChampions).values({ date, championId, createdAt: new Date() }).onConflictDoNothing();
+    return (await this.get(date))!;
   }
 }

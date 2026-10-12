@@ -1,20 +1,33 @@
 import { describe, expect, it } from "vitest";
 import { ConflictError } from "@/application/errors";
-import type { BattleRecord, BattleRepository, PlayerRepository } from "@/application/ports";
-import { generateDailyTeam } from "@/domain";
+import type { BattleRecord, BattleRepository, DailyChampionRepository, PlayerRepository } from "@/application/ports";
+import { getChampion } from "@/domain";
 import { createDatabase, migrateDatabase } from "./db/client";
-import { DrizzleBattleRepository, DrizzlePlayerRepository } from "./db/drizzleRepositories";
-import { MemoryBattleRepository, MemoryPlayerRepository } from "./memory/memoryRepositories";
+import { DrizzleBattleRepository, DrizzleDailyChampionRepository, DrizzlePlayerRepository } from "./db/drizzleRepositories";
+import { MemoryBattleRepository, MemoryDailyChampionRepository, MemoryPlayerRepository } from "./memory/memoryRepositories";
 
 /** The same contract must hold for every adapter, so the app behaves the same in tests and in production. */
-const adapters: [string, () => Promise<{ battles: BattleRepository; players: PlayerRepository }>][] = [
-  ["memory", async () => ({ battles: new MemoryBattleRepository(), players: new MemoryPlayerRepository() })],
+type Repos = { battles: BattleRepository; players: PlayerRepository; dailyChampions: DailyChampionRepository };
+
+const adapters: [string, () => Promise<Repos>][] = [
+  [
+    "memory",
+    async () => ({
+      battles: new MemoryBattleRepository(),
+      players: new MemoryPlayerRepository(),
+      dailyChampions: new MemoryDailyChampionRepository(),
+    }),
+  ],
   [
     "sqlite (drizzle)",
     async () => {
       const db = createDatabase(":memory:");
       await migrateDatabase(db);
-      return { battles: new DrizzleBattleRepository(db), players: new DrizzlePlayerRepository(db) };
+      return {
+        battles: new DrizzleBattleRepository(db),
+        players: new DrizzlePlayerRepository(db),
+        dailyChampions: new DrizzleDailyChampionRepository(db),
+      };
     },
   ],
 ];
@@ -25,8 +38,9 @@ const record = (overrides: Partial<BattleRecord> = {}): BattleRecord => ({
   guildId: "g1",
   mode: "daily",
   date: "2026-10-12",
+  championId: "lance",
   seed: "seed",
-  team: generateDailyTeam("2026-10-12"),
+  team: getChampion("red").team,
   leadIndex: 0,
   actions: [],
   status: "active",
@@ -92,6 +106,20 @@ describe.each(adapters)("%s repositories", (_name, make) => {
     expect(await battles.listDailyResults("bob")).toEqual([{ ...result, date: "2026-10-11" }]);
     expect((await battles.listFinishedDailyByGuild("g1", "2026-10-12")).map((r) => r.id)).toEqual(["a"]);
     expect(await battles.listFinishedDailyByGuild("g2", "2026-10-12")).toEqual([]);
+  });
+
+  it("stores one champion per day; the first claim wins", async () => {
+    const { dailyChampions } = await setup();
+    expect(await dailyChampions.get("2026-10-12")).toBeNull();
+    expect(await dailyChampions.claim("2026-10-12", "lance")).toBe("lance");
+    expect(await dailyChampions.claim("2026-10-12", "steven")).toBe("lance");
+    await dailyChampions.claim("2026-10-13", "red");
+    await dailyChampions.claim("2026-10-20", "blue-1");
+    expect(await dailyChampions.listBetween("2026-10-12", "2026-10-18")).toEqual([
+      { date: "2026-10-12", championId: "lance" },
+      { date: "2026-10-13", championId: "red" },
+    ]);
+    expect(await dailyChampions.listBetween("2026-10-12", "2026-10-11")).toEqual([]);
   });
 
   it("upserts players and finds them by id", async () => {

@@ -14,7 +14,7 @@ const CATEGORY_SHORT: Record<string, string> = { Physical: "Fís", Special: "Esp
 
 interface Props {
   moves: MoveChoice[];
-  /** Types of Red's Pokémon on the field, for effectiveness hints. */
+  /** Types of the champion's Pokémon on the field, for effectiveness hints. */
   targetTypes: string[] | null;
   disabled: boolean;
   canSwitch: boolean;

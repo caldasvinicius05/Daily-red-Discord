@@ -1,18 +1,22 @@
 import {
+  addDays,
   buildShareText,
   challengeNumber,
+  CHAMPIONS,
   computeStats,
-  getDailyChallenge,
+  DATA_VERSION,
+  getChampion,
   msUntilNextDay,
-  PLAYER_POOL,
-  POOL_VERSION,
+  pickChampion,
   rankResults,
-  RED_TEAM,
+  summarizeChampion,
   toGameDate,
+  weekStart,
   type BattleEvent,
   type BattleMode,
   type BattleResult,
   type BattleView,
+  type ChampionSummary,
   type DailyChallenge,
   type GameDate,
   type PlayerAction,
@@ -31,23 +35,29 @@ import type {
   BattleRepository,
   BattleSnapshot,
   Clock,
+  DailyChampionRepository,
   DiscordGateway,
   IdGenerator,
   MoveInfo,
   Player,
   PlayerRepository,
   Pokedex,
+  RandomSource,
   SpeciesInfo,
+  TeamFactory,
 } from "./ports";
 
 export interface Deps {
   engine: BattleEngine;
+  teams: TeamFactory;
   battles: BattleRepository;
+  dailyChampions: DailyChampionRepository;
   players: PlayerRepository;
   discord: DiscordGateway;
   pokedex: Pokedex;
   clock: Clock;
   ids: IdGenerator;
+  random: RandomSource;
 }
 
 // ---------- Output shapes ----------
@@ -57,6 +67,7 @@ export interface BattleState {
   mode: BattleMode;
   date: GameDate;
   challengeNumber: number;
+  champion: ChampionSummary;
   view: BattleView;
   /** On start/resume: the whole battle so far. After an action: only what that action caused. */
   events: BattleEvent[];
@@ -67,8 +78,9 @@ export interface BattleState {
 
 export interface TodayOverview {
   challenge: DailyChallenge;
+  /** Today's daily opponent. Practice battles draw a random one instead. */
+  champion: ChampionSummary;
   msUntilNext: number;
-  redTeam: string[];
   daily:
     | { status: "available" }
     | { status: "active"; battleId: string }
@@ -106,9 +118,30 @@ const MAX_ACTIONS = 500;
 
 // ---------- Helpers ----------
 
-function dailySeed(date: GameDate): string {
+function dailySeed(date: GameDate, championId: string): string {
   // Same seed for everyone: identical choices lead to identical luck.
-  return `${date}:daily:v${POOL_VERSION}`;
+  return `${date}:daily:${championId}:v${DATA_VERSION}`;
+}
+
+/**
+ * The champion of a day. Picked the first time the day is asked for, among champions
+ * not yet seen this week (Monday–Sunday), and stored so it never changes afterwards.
+ */
+async function championOfDay(deps: Deps, date: GameDate): Promise<string> {
+  const stored = await deps.dailyChampions.get(date);
+  if (stored) return stored;
+  const earlierThisWeek = await deps.dailyChampions.listBetween(weekStart(date), addDays(date, -1));
+  const picked = pickChampion(
+    CHAMPIONS.map((c) => c.id),
+    earlierThisWeek.map((d) => d.championId),
+    deps.random,
+  );
+  // If another request picked first, its choice wins.
+  return deps.dailyChampions.claim(date, picked);
+}
+
+function dailyChallenge(deps: Deps, date: GameDate): DailyChallenge {
+  return { date, number: challengeNumber(date), team: deps.teams.dailyTeam(date) };
 }
 
 async function loadOwnedBattle(deps: Deps, playerId: string, battleId: string): Promise<BattleRecord> {
@@ -127,7 +160,7 @@ async function playerStats(deps: Deps, playerId: string): Promise<PlayerStats> {
 async function shareTextFor(deps: Deps, record: BattleRecord, stats?: PlayerStats): Promise<string | null> {
   if (record.mode !== "daily" || !record.result) return null;
   stats ??= await playerStats(deps, record.playerId);
-  return buildShareText(record.result, challengeNumber(record.date), stats.winStreak);
+  return buildShareText(record.result, challengeNumber(record.date), stats.winStreak, getChampion(record.championId).name);
 }
 
 async function toState(deps: Deps, record: BattleRecord, snapshot: BattleSnapshot, events: BattleEvent[]): Promise<BattleState> {
@@ -136,6 +169,7 @@ async function toState(deps: Deps, record: BattleRecord, snapshot: BattleSnapsho
     mode: record.mode,
     date: record.date,
     challengeNumber: challengeNumber(record.date),
+    champion: summarizeChampion(getChampion(record.championId)),
     view: snapshot.view,
     events,
     result: record.result,
@@ -177,7 +211,11 @@ export async function authenticateWithDiscord(
 export async function getToday(deps: Deps, playerId: string): Promise<TodayOverview> {
   const now = deps.clock.now();
   const date = toGameDate(now);
-  const [record, stats] = await Promise.all([deps.battles.findDaily(playerId, date), playerStats(deps, playerId)]);
+  const [record, stats, championId] = await Promise.all([
+    deps.battles.findDaily(playerId, date),
+    playerStats(deps, playerId),
+    championOfDay(deps, date),
+  ]);
 
   let daily: TodayOverview["daily"] = { status: "available" };
   if (record?.status === "active") daily = { status: "active", battleId: record.id };
@@ -186,9 +224,9 @@ export async function getToday(deps: Deps, playerId: string): Promise<TodayOverv
   }
 
   return {
-    challenge: getDailyChallenge(date),
+    challenge: dailyChallenge(deps, date),
+    champion: summarizeChampion(getChampion(championId)),
     msUntilNext: msUntilNextDay(now),
-    redTeam: RED_TEAM.map((s) => s.species),
     daily,
     stats,
   };
@@ -209,15 +247,20 @@ export async function startBattle(
   }
 
   const id = deps.ids.next();
+  // Daily: the day's champion. Practice: any champion, at random, to get used to them all.
+  const championId =
+    input.mode === "daily" ? await championOfDay(deps, date) : CHAMPIONS[Math.floor(deps.random() * CHAMPIONS.length)]!.id;
+
   const record: BattleRecord = {
     id,
     playerId: input.playerId,
     guildId: input.guildId,
     mode: input.mode,
     date,
-    seed: input.mode === "daily" ? dailySeed(date) : `${date}:practice:${id}`,
-    // Practice uses the same six; the player already picks the lead, and the seed differs per run.
-    team: getDailyChallenge(date).team,
+    championId,
+    seed: input.mode === "daily" ? dailySeed(date, championId) : `${date}:practice:${id}`,
+    // Practice keeps the day's six so the player can learn the team.
+    team: deps.teams.dailyTeam(date),
     leadIndex: input.leadIndex,
     actions: [],
     status: "active",
@@ -285,15 +328,17 @@ export async function forfeitBattle(deps: Deps, input: { playerId: string; battl
   return toState(deps, updated, snapshot, []);
 }
 
-/** Static Pokédex data for every set in the pool and Red's team. */
+/**
+ * Static Pokédex data: every species that can appear (player pool + champions) and
+ * every Gen 3 move, item and ability, since daily builds are generated.
+ */
 export function getReferenceData(deps: Deps): ReferenceData {
   const data: ReferenceData = { species: {}, moves: {}, items: {}, abilities: {} };
-  for (const set of [...PLAYER_POOL, ...RED_TEAM]) {
-    data.species[set.species] = deps.pokedex.species(set.species);
-    data.items[set.item] = deps.pokedex.itemDescription(set.item);
-    data.abilities[set.ability] = deps.pokedex.abilityDescription(set.ability);
-    for (const move of set.moves) data.moves[move] = deps.pokedex.move(move);
-  }
+  const species = new Set([...deps.teams.poolSpecies(), ...CHAMPIONS.flatMap((c) => c.team.map((s) => s.species))]);
+  for (const name of species) data.species[name] = deps.pokedex.species(name);
+  for (const move of deps.pokedex.allMoves()) data.moves[move] = deps.pokedex.move(move);
+  for (const item of deps.pokedex.allItems()) data.items[item] = deps.pokedex.itemDescription(item);
+  for (const ability of deps.pokedex.allAbilities()) data.abilities[ability] = deps.pokedex.abilityDescription(ability);
   return data;
 }
 
@@ -322,13 +367,16 @@ export async function getDailyStatuses(deps: Deps, playerIds: readonly string[])
   return { date, statuses };
 }
 
-/** Today's (or a given day's) ranking among players of one Discord server. */
+/** Today's (or a given day's) ranking among players of one Discord server, with that day's champion. */
 export async function getLeaderboard(
   deps: Deps,
   input: { guildId: string; date?: GameDate },
-): Promise<{ date: GameDate; entries: LeaderboardEntry[] }> {
+): Promise<{ date: GameDate; champion: ChampionSummary; entries: LeaderboardEntry[] }> {
   const date = input.date ?? toGameDate(deps.clock.now());
-  const records = await deps.battles.listFinishedDailyByGuild(input.guildId, date);
+  const [records, championId] = await Promise.all([
+    deps.battles.listFinishedDailyByGuild(input.guildId, date),
+    championOfDay(deps, date),
+  ]);
   const players = new Map((await deps.players.findByIds(records.map((r) => r.playerId))).map((p) => [p.id, p]));
 
   const ranked = rankResults(records.map((r) => ({ playerId: r.playerId, result: r.result!, finishedAt: r.finishedAt! })));
@@ -341,7 +389,7 @@ export async function getLeaderboard(
       finishedAt,
     };
   });
-  return { date, entries };
+  return { date, champion: summarizeChampion(getChampion(championId)), entries };
 }
 
 /** Binds every use case to its dependencies; the presentation layer only sees this. */

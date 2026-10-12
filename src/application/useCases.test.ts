@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { BattleView, PlayerAction } from "@/domain";
-import { MemoryBattleRepository, MemoryPlayerRepository } from "@/infrastructure/memory/memoryRepositories";
+import { CHAMPIONS, type BattleView, type PlayerAction } from "@/domain";
+import { createRandom } from "@/domain/rules/random";
+import {
+  MemoryBattleRepository,
+  MemoryDailyChampionRepository,
+  MemoryPlayerRepository,
+} from "@/infrastructure/memory/memoryRepositories";
 import { ShowdownBattleEngine } from "@/infrastructure/showdown/ShowdownBattleEngine";
 import { ShowdownPokedex } from "@/infrastructure/showdown/ShowdownPokedex";
+import { ShowdownTeamFactory } from "@/infrastructure/showdown/ShowdownTeamFactory";
 import {
   AlreadyPlayedError,
   BattleEndedError,
@@ -32,6 +38,9 @@ const fakeDiscord: DiscordGateway = {
 /** 15:00 in São Paulo on the given day. */
 const at = (date: string) => new Date(`${date}T18:00:00Z`);
 
+// Built once: generating the pool is the slow part and it's stateless.
+const teams = new ShowdownTeamFactory();
+
 let now: Date;
 let battles: BattleRepository;
 let app: UseCases;
@@ -42,12 +51,15 @@ beforeEach(async () => {
   battles = new MemoryBattleRepository();
   app = createUseCases({
     engine: new ShowdownBattleEngine(),
+    teams,
     battles,
+    dailyChampions: new MemoryDailyChampionRepository(),
     players: new MemoryPlayerRepository(),
     discord: fakeDiscord,
     pokedex: new ShowdownPokedex(),
     clock: { now: () => now },
     ids: { next: () => `battle-${++n}` },
+    random: createRandom("use-case-tests"),
   });
   await app.registerPlayer(ALICE);
   await app.registerPlayer(BOB);
@@ -86,7 +98,8 @@ describe("today", () => {
     const today = await app.getToday(ALICE.id);
     expect(today.challenge.number).toBe(1);
     expect(today.challenge.team).toHaveLength(6);
-    expect(today.redTeam).toEqual(["Pikachu", "Espeon", "Snorlax", "Venusaur", "Charizard", "Blastoise"]);
+    expect(CHAMPIONS.map((c) => c.id)).toContain(today.champion.id);
+    expect(today.champion.team).toHaveLength(6);
     expect(today.daily).toEqual({ status: "available" });
     expect(today.stats.played).toBe(0);
     expect((await app.getToday(BOB.id)).challenge).toEqual(today.challenge);
@@ -107,7 +120,7 @@ describe("daily battle", () => {
 
     const finished = await playToEnd(ALICE.id, started);
     expect(finished.result).not.toBeNull();
-    expect(finished.shareText).toMatch(/^Daily Red #1 — /);
+    expect(finished.shareText).toMatch(/^Daily Battle #1 — /);
 
     const today = await app.getToday(ALICE.id);
     expect(today.daily.status).toBe("finished");
@@ -154,7 +167,38 @@ describe("daily battle", () => {
   });
 });
 
+describe("daily champion", () => {
+  it("is fixed for the day and the same for everyone", async () => {
+    const champion = (await app.getToday(ALICE.id)).champion;
+    expect((await app.getToday(BOB.id)).champion).toEqual(champion);
+    const battle = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "daily", leadIndex: 0 });
+    expect(battle.champion).toEqual(champion);
+  });
+
+  it("never repeats within a week, and the rotation restarts on Monday", async () => {
+    const week: string[] = [];
+    for (let day = 12; day <= 18; day++) {
+      now = at(`2026-10-${day}`); // Monday 12 → Sunday 18
+      week.push((await app.getToday(ALICE.id)).champion.id);
+    }
+    expect(new Set(week).size).toBe(7);
+    now = at("2026-10-19"); // next Monday: anyone may come back
+    expect(CHAMPIONS.map((c) => c.id)).toContain((await app.getToday(ALICE.id)).champion.id);
+  });
+});
+
 describe("practice", () => {
+  it("draws a random champion per run but keeps the day's team", async () => {
+    const daily = (await app.getToday(ALICE.id)).challenge.team.map((s) => s.species);
+    const seen = new Set<string>();
+    for (let i = 0; i < 12; i++) {
+      const run = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "practice", leadIndex: 0 });
+      seen.add(run.champion.id);
+      expect(run.view.player.team.map((m) => m.species)).toEqual(daily);
+    }
+    expect(seen.size).toBeGreaterThan(1);
+  });
+
   it("can be played any number of times and never touches stats", async () => {
     const first = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "practice", leadIndex: 0 });
     const second = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "practice", leadIndex: 0 });
@@ -225,8 +269,11 @@ describe("daily statuses", () => {
 describe("reference data", () => {
   it("describes every species and move that can appear, with Gen 3 categories", () => {
     const ref = app.getReferenceData();
-    expect(Object.keys(ref.species)).toHaveLength(36);
+    // The whole player pool plus the champions' Pokémon (Pikachu only comes with Red).
+    expect(Object.keys(ref.species).length).toBeGreaterThan(190);
     expect(ref.species["Pikachu"]).toMatchObject({ num: 25, types: ["Electric"] });
+    expect(ref.species["Raichu"]).toBeDefined();
+    expect(ref.moves["Hidden Power Fire"]).toBeDefined();
     expect(ref.species["Metagross"]!.baseStats.atk).toBe(135);
     // Crunch is Dark → special in Gen 3; Shadow Ball is Ghost → physical.
     expect(ref.moves["Crunch"]!.category).toBe("Special");

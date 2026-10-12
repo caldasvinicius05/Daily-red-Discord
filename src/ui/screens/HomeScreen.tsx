@@ -81,7 +81,7 @@ export function HomeScreen({ busy, error, onPlayDaily, onResumeDaily, onPractice
     );
   }
 
-  const { challenge, daily, stats } = today;
+  const { challenge, champion, daily, stats } = today;
   const firstName = player.displayName.split(" ")[0];
 
   return (
@@ -95,10 +95,10 @@ export function HomeScreen({ busy, error, onPlayDaily, onResumeDaily, onPractice
             {daily.status === "finished"
               ? daily.result.won
                 ? `Você venceu hoje, ${firstName}!`
-                : `O Red venceu hoje, ${firstName}.`
+                : `${champion.name} venceu hoje, ${firstName}.`
               : daily.status === "active"
                 ? "Sua batalha está esperando."
-                : "O Red espera no topo."}
+                : `${champion.name} espera por você.`}
           </h1>
           <p className={styles.date}>{formatGameDate(challenge.date)}</p>
 
@@ -133,20 +133,32 @@ export function HomeScreen({ busy, error, onPlayDaily, onResumeDaily, onPractice
           </div>
         </div>
 
-        <aside className={styles.summit} aria-label="Time do Red">
+        <aside className={styles.summit} aria-label={`Campeão de hoje: ${champion.name}`}>
           <div className={styles.summitHeader}>
-            <span className={cx(styles.redName, "logo-font")}>RED</span>
-            <span className={styles.summitHint}>Nível 100 · sempre o mesmo time</span>
+            <div>
+              <span className={styles.summitKicker}>Campeão de hoje</span>
+              <span className={cx(styles.redName, "logo-font")}>{champion.name.toUpperCase()}</span>
+            </div>
+            <span className={styles.summitHint}>
+              {champion.title}
+              {champion.variant ? ` · ${champion.variant}` : ""}
+              <br />
+              {champion.location}
+            </span>
           </div>
           <div className={styles.redTeam}>
-            {today.redTeam.map((species, i) => (
-              <div key={species} className={styles.redMon} style={{ animationDelay: `${i * 70}ms` }}>
+            {champion.team.map((species, i) => (
+              // Index key: a champion can bring the same species more than once.
+              <div key={i} className={styles.redMon} style={{ animationDelay: `${i * 70}ms` }}>
                 <PokemonEmblem species={species} types={typesOf(species)} size={58} still />
                 <span>{species}</span>
               </div>
             ))}
           </div>
-          <p className={styles.summitNote}>Ele sempre começa com {today.redTeam[0]} e nunca troca por vontade própria.</p>
+          <p className={styles.summitNote}>
+            Começa com {champion.team[0]} e nunca troca por vontade própria. Não repete na semana. No treino, o campeão é
+            sorteado a cada partida.
+          </p>
         </aside>
       </section>
 
@@ -169,7 +181,7 @@ export function HomeScreen({ busy, error, onPlayDaily, onResumeDaily, onPractice
         <section className={styles.team}>
           <header className={styles.sectionHeader}>
             <h2>Seu time de hoje</h2>
-            <p>Todo mundo recebe estes mesmos seis. Nível 100, IVs perfeitos.</p>
+            <p>Todo mundo recebe estes mesmos seis, nível 100, com sets competitivos gerados para o dia.</p>
           </header>
           <div className={styles.teamGrid}>
             {challenge.team.map((set, i) => (

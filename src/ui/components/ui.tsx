@@ -23,7 +23,7 @@ export function Logo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
       </svg>
       <div className={styles.logoText}>
         <span className={cx("logo-font", styles.logoDaily)}>DAILY</span>
-        <span className={cx("logo-font", styles.logoRed)}>RED</span>
+        <span className={cx("logo-font", styles.logoRed)}>BATTLE</span>
       </div>
     </div>
   );

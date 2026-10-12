@@ -60,7 +60,7 @@ export function App() {
       }
       const config = await api.authConfig();
       if (config.devLogin) setScreen({ name: "login" });
-      else setScreen({ name: "boot", status: "", error: "Abra o Daily Red pelo Discord para jogar." });
+      else setScreen({ name: "boot", status: "", error: "Abra o Daily Battle pelo Discord para jogar." });
     } catch (e) {
       setScreen({ name: "boot", status: "", error: e instanceof Error ? e.message : "Não foi possível entrar." });
     }

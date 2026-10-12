@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { BattleResult } from "../entities";
-import { generateDailyTeam } from "./dailyTeam";
+import { pickChampion, weekStart } from "./championRotation";
+import { pickDailySpecies } from "./dailyTeam";
 import { addDays, challengeNumber, msUntilNextDay, toGameDate } from "./gameDate";
 import { createRandom } from "./random";
 import { buildShareText } from "./share";
@@ -38,15 +39,39 @@ describe("gameDate", () => {
   });
 });
 
-describe("daily team", () => {
+const POOL = Array.from({ length: 40 }, (_, i) => `Mon${i}`);
+
+describe("daily species", () => {
   it("is the same for everyone on a given day", () => {
-    expect(generateDailyTeam("2026-10-12")).toEqual(generateDailyTeam("2026-10-12"));
+    expect(pickDailySpecies("2026-10-12", POOL)).toEqual(pickDailySpecies("2026-10-12", POOL));
   });
 
   it("has six distinct Pokémon and changes between days", () => {
-    const team = generateDailyTeam("2026-10-12");
-    expect(new Set(team.map((p) => p.species)).size).toBe(6);
-    expect(generateDailyTeam("2026-10-13")).not.toEqual(team);
+    const team = pickDailySpecies("2026-10-12", POOL);
+    expect(new Set(team).size).toBe(6);
+    expect(pickDailySpecies("2026-10-13", POOL)).not.toEqual(team);
+  });
+});
+
+describe("champion rotation", () => {
+  it("weeks start on Monday", () => {
+    expect(weekStart("2026-10-12")).toBe("2026-10-12"); // Monday
+    expect(weekStart("2026-10-18")).toBe("2026-10-12"); // Sunday
+    expect(weekStart("2026-10-19")).toBe("2026-10-19"); // next Monday
+    expect(weekStart("2026-11-01")).toBe("2026-10-26"); // across a month
+  });
+
+  it("never repeats a champion within the week while there are unused ones", () => {
+    const ids = ["a", "b", "c", "d", "e", "f", "g"];
+    const random = createRandom("rotation");
+    const week: string[] = [];
+    for (let day = 0; day < 7; day++) week.push(pickChampion(ids, week, random));
+    expect([...week].sort()).toEqual(ids);
+  });
+
+  it("allows repeats only once every champion was used", () => {
+    expect(pickChampion(["a", "b"], ["a", "b"], () => 0.99)).toBe("b");
+    expect(pickChampion(["a", "b"], ["a"], () => 0.99)).toBe("b");
   });
 });
 
@@ -82,13 +107,13 @@ describe("stats", () => {
 
 describe("share text", () => {
   it("shows survivors on a win", () => {
-    expect(buildShareText(result("2026-10-12", true), 1, 3)).toBe(
-      "Daily Red #1 — venci o Red! 🏆\n🟩🟩⬛⬛⬛⬛ 2/6 de pé · 20 turnos\n🔥 Sequência: 3",
+    expect(buildShareText(result("2026-10-12", true), 1, 3, "Lance")).toBe(
+      "Daily Battle #1 — venci Lance! 🏆\n🟩🟩⬛⬛⬛⬛ 2/6 de pé · 20 turnos\n🔥 Sequência: 3",
     );
   });
 
   it("shows knockouts on a loss", () => {
     const lost = { ...result("2026-10-12", false), redFainted: [true, false, false, false, false, false] };
-    expect(buildShareText(lost, 4, 0)).toBe("Daily Red #4 — o Red venceu 💀\n🟥⬛⬛⬛⬛⬛ 1/6 derrubados · 20 turnos");
+    expect(buildShareText(lost, 4, 0, "Steven")).toBe("Daily Battle #4 — Steven venceu 💀\n🟥⬛⬛⬛⬛⬛ 1/6 derrubados · 20 turnos");
   });
 });

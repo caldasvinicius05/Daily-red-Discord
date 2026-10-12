@@ -1,6 +1,6 @@
-# Daily Red
+# Daily Battle
 
-Uma batalha por dia contra o Red, no topo do Monte Prateado — como uma **Atividade do Discord** para jogar com os amigos.
+Uma batalha por dia contra um campeão das gerações 1 a 3 — como uma **Atividade do Discord** para jogar com os amigos.
 
 Todo mundo do servidor recebe **o mesmo time de seis Pokémon** a cada dia e tem **uma única chance** na diária. O resultado entra no ranking do servidor e pode ser postado no chat. O modo treino é ilimitado e não conta para nada.
 
@@ -8,21 +8,22 @@ Todo mundo do servidor recebe **o mesmo time de seis Pokémon** a cada dia e tem
 
 ## Como funciona
 
-- **Time do dia:** uma seed baseada na data sorteia 6 Pokémon de um pool de 30 (Gen 1–3, nível 100). O "dia" segue o horário de São Paulo, então todos do servidor estão sempre no mesmo desafio.
+- **Time do dia:** uma seed baseada na data sorteia 6 Pokémon entre todos os 193 em forma final das gerações 1 a 3 (sem lendários), com sets competitivos gerados pelo gerador da Gen 3 do Showdown, todos no nível 100. O "dia" segue o horário de São Paulo, então todos do servidor estão sempre no mesmo desafio.
 - **Mesma sorte para todos:** a diária usa a mesma seed de batalha para todo mundo — quem fizer as mesmas escolhas tem exatamente o mesmo resultado.
-- **O Red:** time fixo (Pikachu, Espeon, Snorlax, Venusaur, Charizard, Blastoise), começa sempre com Pikachu e escolhe golpes com base em cálculo de dano.
+- **Campeões:** Blue (3 times), Lance, Red, Steven e Wallace, com os times dos jogos e sets competitivos de Gen 3. O campeão do dia é sorteado entre os que **ainda não apareceram na semana** (segunda a domingo) e fica guardado no banco — com 7 times, cada um aparece uma vez por semana em ordem aleatória. O campeão começa sempre com o primeiro Pokémon do time e escolhe golpes com base em cálculo de dano.
+- **Treino:** ilimitado, com o mesmo time do dia e um campeão sorteado a cada partida.
 - **Batalha:** motor do Pokémon Showdown com as regras da Gen 3 (categoria física/especial pelo tipo do golpe, mecânicas da época).
 
 ## Funcionalidades
 
-- Tela inicial com o time do dia, contagem para o próximo, time do Red, estatísticas e ranking do servidor
+- Tela inicial com o time do dia, contagem para o próximo, campeão do dia, estatísticas e ranking do servidor
 - Escolha do Pokémon inicial com leitura rápida do confronto
 - Batalha animada: barras de HP, narração em português, clima, mudanças de atributo, dicas de efetividade
 - Histórico sempre aberto ao lado, com dano/cura exatos, itens, status e trocas
 - Painel de troca compacto sobre a arena
 - Resultado com texto para compartilhar e botão **Postar no Discord**
 - Painel **Na atividade agora** com o status do dia de quem está na atividade
-- Comando **`/dailyred`** com o ranking de hoje no chat
+- Comando **`/dailybattle`** com o ranking de hoje no chat
 - Estatísticas: jogos, % de vitórias, sequência, recorde e dias seguidos
 
 ## Stack
@@ -32,7 +33,7 @@ Todo mundo do servidor recebe **o mesmo time de seis Pokémon** a cada dia e tem
 | App e API | Next.js 16 (App Router, Route Handlers), React 19, TypeScript |
 | Batalha | [`pokemon-showdown`](https://www.npmjs.com/package/pokemon-showdown) (MIT) + [`@smogon/calc`](https://www.npmjs.com/package/@smogon/calc) para a IA |
 | Banco | SQLite via Drizzle ORM + libSQL (arquivo local; [Turso](https://turso.tech) em produção) |
-| Discord | Embedded App SDK (atividade), OAuth2, Interactions (comando `/dailyred`) |
+| Discord | Embedded App SDK (atividade), OAuth2, Interactions (comando `/dailybattle`) |
 | Testes | Vitest |
 | Deploy | Vercel + Turso |
 
@@ -42,9 +43,9 @@ Arquitetura em camadas dentro de um único app Next.js. As dependências apontam
 
 ```
 src/
-├─ domain/          Regras puras: seed do dia, pool de sets, estatísticas, ranking, texto do resultado
+├─ domain/          Regras puras: campeões, rodízio semanal, seed do dia, estatísticas, ranking, texto do resultado
 ├─ application/     Casos de uso + "ports" (interfaces): batalhas, jogadores, Discord, relógio
-├─ infrastructure/  Implementações dos ports: Showdown, IA do Red, Drizzle/libSQL, Discord, sessão
+├─ infrastructure/  Implementações dos ports: Showdown (motor, gerador de times, IA), Drizzle/libSQL, Discord, sessão
 │  └─ container.ts  Composição: o único lugar que liga cada port à sua implementação
 ├─ app/             Next.js: páginas e rotas da API (camada de apresentação HTTP)
 └─ ui/              Interface React: telas, batalha, componentes
@@ -105,7 +106,7 @@ O endereço do túnel muda a cada execução; atualize o URL Mapping quando isso
 3. No Developer Portal, aponte para o endereço fixo da Vercel:
    - **URL Mappings:** `/` → `seu-app.vercel.app`
    - **Interactions Endpoint URL:** `https://seu-app.vercel.app/api/interactions`
-4. Registre o comando `/dailyred` (só uma vez, ou quando mudar o nome/descrição/opções do comando):
+4. Registre o comando `/dailybattle` (só uma vez, ou quando mudar o nome/descrição/opções do comando). O script também remove o antigo `/dailyred`:
    ```bash
    npm run register-commands
    ```
@@ -122,11 +123,13 @@ Cada push na branch `master` gera um novo deploy automaticamente. O login de tes
 | `npm run typecheck` | Verificação de tipos |
 | `npm run db:generate` | Gera uma nova migration a partir do schema |
 | `npm run tunnel` | Túnel HTTPS para testar no Discord |
-| `npm run register-commands` | Registra/atualiza o comando `/dailyred` |
+| `npm run register-commands` | Registra/atualiza o comando `/dailybattle` |
 
 ## Personalizando
 
-- **Pool de Pokémon e time do Red:** [`src/domain/data/pool.ts`](src/domain/data/pool.ts). Os sets são validados pelo próprio Showdown nos testes (`npm test`). Ao mudar o pool, aumente `POOL_VERSION`.
+- **Campeões e seus sets:** [`src/domain/data/champions.ts`](src/domain/data/champions.ts). Os sets são validados pelo próprio Showdown nos testes (`npm test`). Ao mudar sets ou regras do pool, aumente `DATA_VERSION`.
+- **Pool do jogador:** [`src/infrastructure/showdown/ShowdownTeamFactory.ts`](src/infrastructure/showdown/ShowdownTeamFactory.ts) (formas finais das gerações 1 a 3, sem lendários).
+- **Rodízio dos campeões:** [`src/domain/rules/championRotation.ts`](src/domain/rules/championRotation.ts).
 - **Fuso do "dia" e data de lançamento:** [`src/domain/rules/gameDate.ts`](src/domain/rules/gameDate.ts).
-- **IA do Red:** [`src/infrastructure/showdown/redAI.ts`](src/infrastructure/showdown/redAI.ts).
+- **IA dos campeões:** [`src/infrastructure/showdown/redAI.ts`](src/infrastructure/showdown/redAI.ts).
 - **Visual dos Pokémon:** [`src/ui/components/PokemonEmblem.tsx`](src/ui/components/PokemonEmblem.tsx) é o único componente que desenha um Pokémon em todas as telas.

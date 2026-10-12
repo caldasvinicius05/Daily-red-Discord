@@ -1,10 +1,11 @@
 import { createUseCases, type UseCases } from "@/application/useCases";
 import { config, discordConfigured } from "./config";
 import { createDatabase, prepareDatabase } from "./db/client";
-import { DrizzleBattleRepository, DrizzlePlayerRepository } from "./db/drizzleRepositories";
+import { DrizzleBattleRepository, DrizzleDailyChampionRepository, DrizzlePlayerRepository } from "./db/drizzleRepositories";
 import { HttpDiscordGateway, unavailableDiscordGateway } from "./discord/discordGateway";
 import { ShowdownBattleEngine } from "./showdown/ShowdownBattleEngine";
 import { ShowdownPokedex } from "./showdown/ShowdownPokedex";
+import { ShowdownTeamFactory } from "./showdown/ShowdownTeamFactory";
 import { systemClock, uuidGenerator } from "./system";
 
 /**
@@ -18,7 +19,9 @@ async function build(): Promise<UseCases> {
   await prepareDatabase(db, config.databaseUrl);
   return createUseCases({
     engine: new ShowdownBattleEngine(),
+    teams: new ShowdownTeamFactory(),
     battles: new DrizzleBattleRepository(db),
+    dailyChampions: new DrizzleDailyChampionRepository(db),
     players: new DrizzlePlayerRepository(db),
     discord: discordConfigured()
       ? new HttpDiscordGateway(config.discordClientId, config.discordClientSecret)
@@ -26,6 +29,7 @@ async function build(): Promise<UseCases> {
     pokedex: new ShowdownPokedex(),
     clock: systemClock,
     ids: uuidGenerator,
+    random: Math.random,
   });
 }
 

@@ -4,17 +4,42 @@ export type GameDate = string;
 export type StatName = "hp" | "atk" | "def" | "spa" | "spd" | "spe";
 export type StatSpread = Record<StatName, number>;
 
-/** One Pokémon as we author it. Shape mirrors a Showdown set so the engine can consume it directly. */
+/** One Pokémon's build. Shape mirrors a Showdown set so the engine can consume it directly. */
 export interface PokemonSet {
   species: string;
   item: string;
   ability: string;
   nature: string;
   evs: Partial<StatSpread>;
-  moves: [string, string, string, string];
+  /** Defaults to 31 everywhere; set when Hidden Power's type depends on them. */
+  ivs?: Partial<StatSpread>;
+  /** 1–4 moves (a few Pokémon, like Ditto or Unown, only have one). */
+  moves: string[];
 }
 
 export type Team = PokemonSet[];
+
+/** An opponent at the end of the road. In code the opponent's side is still called "red". */
+export interface Champion {
+  id: string;
+  name: string;
+  /** Distinguishes several teams of the same trainer, e.g. "Time 1". */
+  variant?: string;
+  title: string;
+  location: string;
+  /** Sent out first: always `team[0]`. */
+  team: Team;
+}
+
+/** What the UI needs to show a champion without the full sets. */
+export interface ChampionSummary {
+  id: string;
+  name: string;
+  variant: string | null;
+  title: string;
+  location: string;
+  team: string[];
+}
 
 export interface DailyChallenge {
   date: GameDate;
@@ -31,7 +56,7 @@ export interface BattleResult {
   turns: number;
   /** Per player slot: true if that Pokémon was still standing at the end. */
   playerAlive: boolean[];
-  /** Per Red slot: true if that Pokémon was knocked out. */
+  /** Per champion slot: true if that Pokémon was knocked out. (Name kept from when Red was the only opponent.) */
   redFainted: boolean[];
   /** The player left before the battle ended; counts as a loss. */
   abandoned: boolean;

@@ -36,4 +36,16 @@ export class ShowdownPokedex implements Pokedex {
     const ability = gen3.abilities.get(name);
     return ability.shortDesc || ability.desc || "";
   }
+
+  allMoves(): readonly string[] {
+    return gen3.moves.all().filter((m) => m.exists && m.gen <= 3 && !m.isNonstandard).map((m) => m.name);
+  }
+
+  allItems(): readonly string[] {
+    return gen3.items.all().filter((i) => i.exists && i.gen <= 3 && !i.isNonstandard).map((i) => i.name);
+  }
+
+  allAbilities(): readonly string[] {
+    return gen3.abilities.all().filter((a) => a.exists && a.gen <= 3 && a.num > 0 && !a.isNonstandard).map((a) => a.name);
+  }
 }

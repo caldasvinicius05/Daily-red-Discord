@@ -8,8 +8,8 @@ const pixel = Pixelify_Sans({ subsets: ["latin"], variable: "--font-pixel", disp
 const logo = Press_Start_2P({ subsets: ["latin"], weight: "400", variable: "--font-logo", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Daily Red",
-  description: "Uma batalha por dia contra o Red no topo do Monte Prateado.",
+  title: "Daily Battle",
+  description: "Uma batalha por dia contra um campeão. Mesmo time para todo o servidor.",
 };
 
 export const viewport: Viewport = {

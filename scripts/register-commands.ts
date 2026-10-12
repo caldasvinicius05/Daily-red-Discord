@@ -1,11 +1,12 @@
 /**
- * Registers (or updates) the `/dailyred` slash command for this app.
- * Run once, and again whenever the command definition changes:
+ * Registers (or updates) the `/dailybattle` slash command for this app, and removes the
+ * old `/dailyred` if it is still there. Run once, and again whenever the command's
+ * name, description or options change:
  *   npm run register-commands
  *
  * Uses the client-credentials grant, so only CLIENT_ID and CLIENT_SECRET from .env
- * are needed. Creates the single command with POST (an upsert by name) instead of
- * overwriting the whole list, so the Activity's "Launch" entry point command is kept.
+ * are needed. Commands are created/deleted one by one (never a bulk overwrite), so the
+ * Activity's "Launch" entry point command is kept.
  */
 process.loadEnvFile(".env");
 
@@ -25,20 +26,26 @@ const tokenResponse = await fetch(`${API}/oauth2/token`, {
 });
 if (!tokenResponse.ok) throw new Error(`Falha ao obter token (${tokenResponse.status}): ${await tokenResponse.text()}`);
 const { access_token: accessToken } = (await tokenResponse.json()) as { access_token: string };
+const headers = { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" };
 
 const command = {
-  name: "dailyred",
-  description: "Mostra o ranking de hoje do Daily Red neste servidor",
+  name: "dailybattle",
+  description: "Mostra o ranking de hoje do Daily Battle neste servidor",
   type: 1, // CHAT_INPUT (slash command)
   contexts: [0], // only inside servers
   integration_types: [0], // installed to a server
 };
 
-const response = await fetch(`${API}/applications/${clientId}/commands`, {
-  method: "POST",
-  headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-  body: JSON.stringify(command),
-});
-if (!response.ok) throw new Error(`Falha ao registrar /dailyred (${response.status}): ${await response.text()}`);
+const response = await fetch(`${API}/applications/${clientId}/commands`, { method: "POST", headers, body: JSON.stringify(command) });
+if (!response.ok) throw new Error(`Falha ao registrar /dailybattle (${response.status}): ${await response.text()}`);
+console.log("✓ Comando /dailybattle registrado.");
 
-console.log("✓ Comando /dailyred registrado. Pode levar alguns instantes para aparecer no Discord.");
+// Clean up the command from before the rename.
+const existing = (await (await fetch(`${API}/applications/${clientId}/commands`, { headers })).json()) as { id: string; name: string }[];
+const old = existing.find((c) => c.name === "dailyred");
+if (old) {
+  const removed = await fetch(`${API}/applications/${clientId}/commands/${old.id}`, { method: "DELETE", headers });
+  console.log(removed.ok ? "✓ Comando antigo /dailyred removido." : `! Não foi possível remover /dailyred (${removed.status}).`);
+}
+
+console.log("Pode levar alguns instantes para os comandos atualizarem no Discord.");

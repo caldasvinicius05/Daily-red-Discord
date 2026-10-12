@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { LeaderboardEntry } from "@/application/useCases";
+import { getChampion, summarizeChampion } from "@/domain";
 import { leaderboardMessage } from "./discordMessages";
+
+const lance = summarizeChampion(getChampion("lance"));
 
 const entry = (rank: number, id: string, name: string, won: boolean, abandoned = false): LeaderboardEntry => ({
   rank,
@@ -18,14 +21,15 @@ const entry = (rank: number, id: string, name: string, won: boolean, abandoned =
 
 describe("leaderboardMessage", () => {
   it("lists the ranking with medals, mentions real Discord users and never pings", () => {
-    const msg = leaderboardMessage("2026-10-12", [
+    const msg = leaderboardMessage("2026-10-12", lance, [
       entry(1, "123456789012345678", "Alice", true),
       entry(2, "dev-bob", "Bob", false),
       entry(3, "223456789012345678", "Carol", false, true),
       entry(4, "323456789012345678", "Dan", false),
     ]);
     const lines = msg.embeds[0]!.description.split("\n");
-    expect(msg.embeds[0]!.title).toBe("Daily Red #1 — ranking de hoje");
+    expect(msg.embeds[0]!.title).toBe("Daily Battle #1 — Lance");
+    expect(msg.embeds[0]!.footer.text).toBe("Ranking de hoje · Campeão de Johto · Platô Indigo");
     expect(lines[0]).toBe("🥇 <@123456789012345678> — venceu · 2/6 de pé · 21 turnos");
     expect(lines[1]).toBe("🥈 **Bob** — perdeu · 3/6 derrubados");
     expect(lines[2]).toBe("🥉 <@223456789012345678> — desistiu 🏳️");
@@ -34,6 +38,6 @@ describe("leaderboardMessage", () => {
   });
 
   it("has a friendly empty state", () => {
-    expect(leaderboardMessage("2026-10-12", []).embeds[0]!.description).toContain("Ninguém deste servidor");
+    expect(leaderboardMessage("2026-10-12", lance, []).embeds[0]!.description).toContain("Ninguém deste servidor enfrentou Lance");
   });
 });

@@ -1,5 +1,5 @@
 import { ConflictError } from "@/application/errors";
-import type { BattleRecord, BattleRepository, Player, PlayerRepository } from "@/application/ports";
+import type { BattleRecord, BattleRepository, DailyChampionRepository, Player, PlayerRepository } from "@/application/ports";
 import type { BattleResult, GameDate } from "@/domain";
 
 /** In-memory adapters: used by tests, and handy to run the app without a database. */
@@ -57,5 +57,25 @@ export class MemoryPlayerRepository implements PlayerRepository {
       const p = this.players.get(id);
       return p ? [{ ...p }] : [];
     });
+  }
+}
+
+export class MemoryDailyChampionRepository implements DailyChampionRepository {
+  private readonly byDate = new Map<GameDate, string>();
+
+  async get(date: GameDate): Promise<string | null> {
+    return this.byDate.get(date) ?? null;
+  }
+
+  async listBetween(from: GameDate, to: GameDate): Promise<{ date: GameDate; championId: string }[]> {
+    return [...this.byDate.entries()]
+      .filter(([date]) => date >= from && date <= to)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, championId]) => ({ date, championId }));
+  }
+
+  async claim(date: GameDate, championId: string): Promise<string> {
+    if (!this.byDate.has(date)) this.byDate.set(date, championId);
+    return this.byDate.get(date)!;
   }
 }

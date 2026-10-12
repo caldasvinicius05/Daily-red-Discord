@@ -23,7 +23,7 @@ export function Leaderboard({ board, loading }: { board: LeaderboardDTO | null; 
 
       {board && board.entries.length === 0 && (
         <div className={styles.empty}>
-          <p>Ninguém enfrentou o Red hoje ainda.</p>
+          <p>Ninguém enfrentou o campeão hoje ainda.</p>
           <p className={styles.emptyHint}>{insideDiscord ? "Seja o primeiro do servidor!" : "Jogue para aparecer aqui."}</p>
         </div>
       )}

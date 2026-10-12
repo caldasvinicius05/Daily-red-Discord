@@ -44,12 +44,13 @@ export function LeadScreen({ mode, initialToday, busy, error, onBack, onConfirm 
   }
 
   const team = today.challenge.team;
-  const redLead = today.redTeam[0]!;
-  const redLeadTypes = typesOf(redLead);
+  const champion = today.champion;
+  const championLead = champion.team[0]!;
+  const championLeadTypes = typesOf(championLead);
   const chosen = team[lead]!;
-  // Quick read of the matchup: best multiplier of the chosen lead's attacking types vs Red's lead.
-  const best = Math.max(...typesOf(chosen.species).map((t) => effectiveness(t, redLeadTypes)));
-  const worst = Math.max(...redLeadTypes.map((t) => effectiveness(t, typesOf(chosen.species))));
+  // Quick read of the matchup: best multiplier of the chosen lead's attacking types vs the champion's lead.
+  const best = Math.max(...typesOf(chosen.species).map((t) => effectiveness(t, championLeadTypes)));
+  const worst = Math.max(...championLeadTypes.map((t) => effectiveness(t, typesOf(chosen.species))));
 
   return (
     <main className={styles.page}>
@@ -69,7 +70,7 @@ export function LeadScreen({ mode, initialToday, busy, error, onBack, onConfirm 
         <p>
           {mode === "daily"
             ? "Você tem uma chance hoje. A escolha do primeiro Pokémon vale muito."
-            : "Treino não conta para as estatísticas. Teste estratégias à vontade."}
+            : "Treino não conta para as estatísticas. O campeão é sorteado ao começar."}
         </p>
       </header>
 
@@ -80,6 +81,12 @@ export function LeadScreen({ mode, initialToday, busy, error, onBack, onConfirm 
       </div>
 
       <footer className={styles.footer}>
+        {mode === "practice" ? (
+          <div className={styles.practiceNote}>
+            <strong>Campeão sorteado</strong>
+            <span>Pode ser qualquer um dos sete. Seu time é o mesmo da diária de hoje.</span>
+          </div>
+        ) : (
         <div className={styles.matchup}>
           <div className={styles.side}>
             <PokemonEmblem species={chosen.species} types={typesOf(chosen.species)} size={52} still />
@@ -91,17 +98,22 @@ export function LeadScreen({ mode, initialToday, busy, error, onBack, onConfirm 
           <span className={cx(styles.vs, "logo-font")}>VS</span>
           <div className={cx(styles.side, styles.sideRed)}>
             <div>
-              <small>Red</small>
-              <strong>{redLead}</strong>
+              <small>{champion.name}</small>
+              <strong>{championLead}</strong>
             </div>
-            <PokemonEmblem species={redLead} types={redLeadTypes} size={52} still />
+            <PokemonEmblem species={championLead} types={championLeadTypes} size={52} still />
           </div>
           <p className={styles.read}>
-            {best >= 2 ? "Seu tipo é forte contra o líder do Red. " : best < 1 ? "Seu tipo é fraco contra o líder do Red. " : ""}
+            {best >= 2
+              ? `Seu tipo é forte contra o primeiro de ${champion.name}. `
+              : best < 1
+                ? `Seu tipo é fraco contra o primeiro de ${champion.name}. `
+                : ""}
             {worst >= 2 ? "Cuidado: o tipo dele é forte contra você." : worst === 0 ? "O tipo dele não te afeta!" : ""}
             {best < 2 && best >= 1 && worst < 2 && worst !== 0 ? "Confronto equilibrado." : ""}
           </p>
         </div>
+        )}
 
         <div className={styles.confirm}>
           {error && <p className={styles.error}>{error}</p>}

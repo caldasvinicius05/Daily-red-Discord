@@ -23,7 +23,8 @@ interface Interaction {
 
 /**
  * Interactions endpoint (set as "Interactions Endpoint URL" in the Developer Portal).
- * Handles the `/dailyred` slash command. Signature-checked with PUBLIC_KEY.
+ * Handles the `/dailybattle` slash command (and the old `/dailyred` name, until it is
+ * removed from Discord). Signature-checked with PUBLIC_KEY.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // The signature covers the exact raw body, so read it as text before parsing.
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // The Activity's own "Launch" entry point: just open it.
     if (interaction.data?.type === PRIMARY_ENTRY_POINT) return NextResponse.json({ type: LAUNCH_ACTIVITY });
 
-    if (interaction.data?.name === "dailyred") {
+    if (interaction.data?.name === "dailybattle" || interaction.data?.name === "dailyred") {
       if (!interaction.guild_id) {
         return NextResponse.json({
           type: CHANNEL_MESSAGE,
@@ -51,8 +52,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         });
       }
       const app = await getUseCases();
-      const { date, entries } = await app.getLeaderboard({ guildId: interaction.guild_id });
-      return NextResponse.json({ type: CHANNEL_MESSAGE, data: leaderboardMessage(date, entries) });
+      const { date, champion, entries } = await app.getLeaderboard({ guildId: interaction.guild_id });
+      return NextResponse.json({ type: CHANNEL_MESSAGE, data: leaderboardMessage(date, champion, entries) });
     }
   }
 
