@@ -85,7 +85,7 @@ export function MonCard({ set, variant = "full", selected = false, onSelect, ind
         <div className={styles.stats}>
           <StatHexagon stats={info.baseStats} color={c1} size={150} />
           <div className={styles.bst}>
-            <span className="pixel">{Object.values(info.baseStats).reduce((a, b) => a + b, 0)}</span>
+            <span>{Object.values(info.baseStats).reduce((a, b) => a + b, 0)}</span>
             <small>total base</small>
           </div>
         </div>

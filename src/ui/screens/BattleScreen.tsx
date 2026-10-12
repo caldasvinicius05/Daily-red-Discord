@@ -117,7 +117,7 @@ export function BattleScreen({ initial, onExit, onPractice }: Props) {
           <span className={cx(styles.modeChip, battle.mode === "daily" ? styles.modeDaily : styles.modePractice, "pixel")}>
             {battle.mode === "daily" ? `DIÁRIA #${battle.challengeNumber}` : "TREINO"}
           </span>
-          <span className={cx(styles.turn, "pixel")}>Turno {Math.max(1, playback.display.turn)}</span>
+          <span className={styles.turn}>Turno {Math.max(1, playback.display.turn)}</span>
         </div>
         <div className={styles.hudRight}>
           <Button
@@ -141,12 +141,25 @@ export function BattleScreen({ initial, onExit, onPractice }: Props) {
         </div>
       </header>
 
-      <BattleScene
-        display={playback.display}
-        effect={playback.effect}
-        playerOrder={view.player.team.map((m) => m.species)}
-        redOrder={redOrder}
-      />
+      {/* The party picker opens over the arena, so the battle stays in view. */}
+      <div className={styles.sceneWrap}>
+        <BattleScene
+          display={playback.display}
+          effect={playback.effect}
+          playerOrder={view.player.team.map((m) => m.species)}
+          redOrder={redOrder}
+        />
+        {(partyOpen || forcedSwitch) && (
+          <PartyPanel
+            team={view.player.team}
+            active={view.player.active}
+            allowed={view.choices.switches}
+            forced={forcedSwitch}
+            onPick={(teamIndex) => act({ type: "switch", teamIndex })}
+            onCancel={() => setPartyOpen(false)}
+          />
+        )}
+      </div>
 
       <MessageBox
         text={message}
@@ -174,17 +187,6 @@ export function BattleScreen({ initial, onExit, onPractice }: Props) {
             Ver resultado
           </Button>
         </div>
-      )}
-
-      {(partyOpen || forcedSwitch) && (
-        <PartyPanel
-          team={view.player.team}
-          active={view.player.active}
-          allowed={view.choices.switches}
-          forced={forcedSwitch}
-          onPick={(teamIndex) => act({ type: "switch", teamIndex })}
-          onCancel={() => setPartyOpen(false)}
-        />
       )}
 
       {logOpen && (

@@ -9,6 +9,9 @@ import { useSettings } from "../lib/settings";
 import { CATEGORY_PT, effectiveness, effectivenessLabel, TYPE_NAMES_PT, typeColor, typeTextColor } from "../lib/types";
 import styles from "./battle.module.css";
 
+/** Short labels so the category fits on the button next to type, power and PP. */
+const CATEGORY_SHORT: Record<string, string> = { Physical: "Fís", Special: "Esp", Status: "Status" };
+
 interface Props {
   moves: MoveChoice[];
   /** Types of Red's Pokémon on the field, for effectiveness hints. */
@@ -54,10 +57,14 @@ export function MovePanel({ moves, targetTypes, disabled, canSwitch, onMove, onS
                   <TypeIcon type={move.type} />
                   {TYPE_NAMES_PT[move.type] ?? move.type}
                 </span>
-                <span className={styles.moveCategory} title={CATEGORY_PT[category]}>
+                <span className={styles.moveCategory}>
                   <CategoryIcon category={category} />
+                  {CATEGORY_SHORT[category]}
                 </span>
-                <span className={cx(styles.pp, "pixel", lowPp && styles.ppLow)}>
+                <span className={styles.movePower} title="Poder">
+                  {info && info.power > 0 ? `Poder ${info.power}` : "—"}
+                </span>
+                <span className={cx(styles.pp, lowPp && styles.ppLow)}>
                   PP {move.pp}/{move.maxPp}
                 </span>
               </span>

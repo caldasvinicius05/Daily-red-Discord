@@ -209,7 +209,8 @@ button.card {
 
 .bst span {
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
   color: var(--c1);
   text-shadow: 0 0 14px color-mix(in srgb, var(--c1) 50%, transparent);
 }

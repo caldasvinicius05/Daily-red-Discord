@@ -50,7 +50,9 @@
 }
 
 .turn {
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: var(--text-dim);
   white-space: nowrap;
 }
@@ -445,7 +447,8 @@
 
 .level {
   margin-left: auto;
-  font-size: 14px;
+  font-size: 12.5px;
+  font-weight: 700;
   color: var(--text-dim);
 }
 
@@ -459,7 +462,9 @@
 
 .hpPercent {
   font-size: 14px;
-  color: var(--text-dim);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
 }
 
 .pips {
@@ -732,16 +737,37 @@
   height: 12px;
 }
 
+.moveCategory {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px 2px 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .moveCategory svg {
   display: block;
-  width: 15px;
-  height: 15px;
-  opacity: 0.8;
+  width: 12px;
+  height: 12px;
+}
+
+.movePower {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .pp {
   margin-left: auto;
-  font-size: 15px;
+  font-size: 13.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
@@ -830,10 +856,11 @@
     gap: 6px;
   }
   .moveCategory {
-    display: none;
+    padding: 2px 5px;
   }
-  .pp {
-    font-size: 13px;
+  .pp,
+  .movePower {
+    font-size: 12px;
   }
   .eff {
     display: none;
@@ -853,113 +880,6 @@
   margin: 0 0 14px;
   color: var(--text-dim);
   font-size: 14px;
-}
-
-.partyList {
-  list-style: none;
-  margin: 14px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.partyRow {
-  width: 100%;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 150px;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--line);
-  background: rgba(5, 9, 20, 0.4);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    border-color 0.2s,
-    transform 0.15s,
-    background 0.2s;
-}
-
-.partyRow:hover:not(:disabled) {
-  border-color: var(--ice);
-  background: rgba(143, 211, 255, 0.07);
-  transform: translateX(3px);
-}
-
-.partyRow:disabled {
-  cursor: default;
-}
-
-.partyActive {
-  border-color: rgba(143, 211, 255, 0.4);
-}
-
-.partyFainted {
-  opacity: 0.55;
-}
-
-.partyInfo {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.partyName {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.partyName strong {
-  font-size: 15.5px;
-}
-
-.partyTag {
-  padding: 1px 6px;
-  border-radius: 6px;
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ice);
-  background: rgba(143, 211, 255, 0.12);
-}
-
-.partyTagDown {
-  color: #ffb0b6;
-  background: rgba(255, 61, 74, 0.14);
-}
-
-.partyTypes {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.partyItem {
-  margin-left: 4px;
-  font-size: 12px;
-  color: var(--text-faint);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.partyHp {
-  min-width: 0;
-}
-
-@media (max-width: 520px) {
-  .partyRow {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-  .partyHp {
-    grid-column: 1 / -1;
-  }
 }
 
 .partyActions {
@@ -1118,7 +1038,8 @@
 
 .resultBig {
   font-size: 30px;
-  font-weight: 700;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
   line-height: 32px;
 }
 
@@ -1201,5 +1122,197 @@
   }
   .resultGrids > div:last-child {
     grid-column: 1 / -1;
+  }
+}
+
+/* ============================================================
+   Compact party picker over the arena
+   ============================================================ */
+.sceneWrap {
+  position: relative;
+}
+
+.partyScrim {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  border-radius: 26px;
+  background: rgba(4, 8, 20, 0.55);
+  animation: party-fade 0.2s ease-out;
+}
+
+.party {
+  position: absolute;
+  z-index: 21;
+  top: 3%;
+  left: 2.5%;
+  width: min(62%, 470px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(24, 35, 72, 0.98), rgba(12, 18, 40, 0.98));
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  animation: party-in 0.25s var(--ease-spring);
+}
+
+.partyHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.partyHeading {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.partySub {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.partyClose {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.partyClose:hover {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.partyGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.partyCell {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(5, 9, 20, 0.45);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    transform 0.15s;
+}
+
+.partyCell:hover:not(:disabled) {
+  border-color: var(--ice);
+  background: rgba(143, 211, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.partyCell:disabled {
+  cursor: default;
+}
+
+.partyCellActive {
+  border-color: rgba(143, 211, 255, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(143, 211, 255, 0.25);
+}
+
+.partyCellFainted {
+  opacity: 0.5;
+}
+
+.partyCellInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.partyCellName {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.partyCellName > span {
+  font-size: 9.5px;
+  padding: 0 4px;
+}
+
+.partyBar {
+  position: relative;
+  height: 5px;
+  border-radius: 4px;
+  background: #1a2238;
+  overflow: hidden;
+}
+
+.partyBarFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 4px;
+}
+
+.bar-high {
+  background: var(--hp-high);
+}
+.bar-mid {
+  background: var(--hp-mid);
+}
+.bar-low {
+  background: var(--hp-low);
+}
+
+.partyCellHp {
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+@media (max-width: 640px) {
+  .party {
+    left: 3%;
+    right: 3%;
+    width: auto;
+  }
+  .partyGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@keyframes party-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+}
+
+@keyframes party-fade {
+  from {
+    opacity: 0;
   }
 }

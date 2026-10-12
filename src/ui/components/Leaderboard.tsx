@@ -37,7 +37,7 @@ export function Leaderboard({ board, loading }: { board: LeaderboardDTO | null; 
             const kos = result.redFainted.filter(Boolean).length;
             return (
               <li key={entry.player.id} className={cx(styles.row, me && styles.me)}>
-                <span className={cx(styles.rank, "pixel", entry.rank <= 3 && styles[`rank${entry.rank}`])}>{entry.rank}</span>
+                <span className={cx(styles.rank, entry.rank <= 3 && styles[`rank${entry.rank}`])}>{entry.rank}</span>
                 <Avatar id={entry.player.id} name={entry.player.displayName} avatar={entry.player.avatar} size={34} />
                 <div className={styles.who}>
                   <strong>

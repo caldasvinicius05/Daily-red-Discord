@@ -119,7 +119,7 @@ export function HpBar({ hp, maxHp, showNumbers = false }: { hp: number; maxHp: n
         </div>
       </div>
       {showNumbers && (
-        <div className={cx(styles.hpNumbers, "pixel")}>
+        <div className={styles.hpNumbers}>
           {shown}
           <span>/{maxHp}</span>
         </div>

@@ -84,7 +84,7 @@ export function ResultOverlay({ battle, onHome, onPractice }: { battle: BattleDT
           </div>
           <div>
             <small>Duração</small>
-            <div className={cx(styles.resultBig, "pixel")}>{result.turns}</div>
+            <div className={styles.resultBig}>{result.turns}</div>
             <strong>{plural(result.turns, "turno", "turnos")}</strong>
           </div>
         </div>

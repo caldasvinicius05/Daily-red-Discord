@@ -63,12 +63,12 @@ function InfoBox({ side, mon, party }: { side: BattleSide; mon: MonDisplay | und
           <div className={styles.infoTop}>
             <strong className={styles.infoName}>{mon.species}</strong>
             <StatusBadge status={mon.status} />
-            <span className={cx(styles.level, "pixel")}>Nv100</span>
+            <span className={styles.level}>Nv. 100</span>
           </div>
           <HpBar hp={mon.hp} maxHp={mon.maxHp} showNumbers={side === "player"} />
           <div className={styles.infoBottom}>
             <PartyPips mons={party} />
-            {side === "red" && <span className={cx(styles.hpPercent, "pixel")}>{mon.hp}%</span>}
+            {side === "red" && <span className={styles.hpPercent}>{mon.hp}%</span>}
           </div>
           <BoostChips boosts={mon.boosts} />
         </>

@@ -135,9 +135,10 @@
 }
 
 .countdown strong {
-  font-size: 18px;
+  font-size: 17px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
   color: var(--snow);
-  letter-spacing: 0.06em;
 }
 
 /* ---------- Red's summit card ---------- */
@@ -222,7 +223,8 @@
 
 .stat strong {
   font-size: 30px;
-  font-weight: 700;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
   line-height: 1.1;
 }
 

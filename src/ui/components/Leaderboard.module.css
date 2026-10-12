@@ -58,8 +58,9 @@
   display: grid;
   place-items: center;
   border-radius: 9px;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
   color: var(--text-dim);
   background: rgba(255, 255, 255, 0.05);
 }

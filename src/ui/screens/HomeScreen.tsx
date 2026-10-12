@@ -129,7 +129,7 @@ export function HomeScreen({ busy, error, onPlayDaily, onResumeDaily, onPractice
           <div className={styles.countdown}>
             <ClockIcon width={16} height={16} />
             <span>Novo time em</span>
-            <strong className="pixel">{formatCountdown(remaining)}</strong>
+            <strong>{formatCountdown(remaining)}</strong>
           </div>
         </div>
 
@@ -159,7 +159,7 @@ export function HomeScreen({ busy, error, onPlayDaily, onResumeDaily, onPractice
           { label: "Dias seguidos", value: stats.dayStreak },
         ].map((s) => (
           <div key={s.label} className={cx(styles.stat, s.accent && styles.statAccent)}>
-            <strong className="pixel">{s.value}</strong>
+            <strong>{s.value}</strong>
             <span>{s.label}</span>
           </div>
         ))}

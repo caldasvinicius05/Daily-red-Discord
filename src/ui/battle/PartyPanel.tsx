@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import type { PlayerMonView } from "@/domain";
 import { useSpeciesTypes } from "../AppContext";
 import { PokemonEmblem } from "../components/PokemonEmblem";
-import { Button, cx, HpBar, Modal, StatusBadge, TypeBadge } from "../components/ui";
+import { cx, hpTone, StatusBadge } from "../components/ui";
 import styles from "./battle.module.css";
 
 interface Props {
@@ -17,56 +18,71 @@ interface Props {
   onCancel: () => void;
 }
 
+/**
+ * Compact party picker drawn over the arena's top-left corner (rendered inside the
+ * scene wrapper), so the battle stays visible while choosing who comes in.
+ */
 export function PartyPanel({ team, active, allowed, forced, onPick, onCancel }: Props) {
   const typesOf = useSpeciesTypes();
+
+  useEffect(() => {
+    if (forced) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onCancel();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [forced, onCancel]);
+
   return (
-    <Modal onClose={forced ? undefined : onCancel} labelledBy="party-title">
-      <h2 id="party-title" className={styles.partyTitle}>
-        {forced ? `${team[active]?.species} não pode continuar! Quem entra?` : "Trocar de Pokémon"}
-      </h2>
-      {!forced && <p className={styles.partyHint}>Trocar gasta o seu turno.</p>}
+    <>
+      <div className={styles.partyScrim} onClick={forced ? undefined : onCancel} aria-hidden="true" />
+      <div className={styles.party} role="dialog" aria-modal="true" aria-labelledby="party-title">
+        <header className={styles.partyHeader}>
+          <div>
+            <h2 id="party-title" className={styles.partyHeading}>
+              {forced ? "Quem entra agora?" : "Trocar Pokémon"}
+            </h2>
+            <p className={styles.partySub}>
+              {forced ? `${team[active]?.species} não pode continuar.` : "Trocar gasta o seu turno."}
+            </p>
+          </div>
+          {!forced && (
+            <button className={styles.partyClose} onClick={onCancel} aria-label="Fechar">
+              ✕
+            </button>
+          )}
+        </header>
 
-      <ul className={styles.partyList}>
-        {team.map((mon, i) => {
-          const canPick = allowed.includes(i);
-          return (
-            <li key={mon.species}>
-              <button
-                className={cx(styles.partyRow, i === active && styles.partyActive, mon.fainted && styles.partyFainted)}
-                disabled={!canPick}
-                onClick={() => onPick(i)}
-              >
-                <PokemonEmblem species={mon.species} types={typesOf(mon.species)} size={48} still fainted={mon.fainted} />
-                <div className={styles.partyInfo}>
-                  <div className={styles.partyName}>
-                    <strong>{mon.species}</strong>
-                    {i === active && <span className={styles.partyTag}>em campo</span>}
-                    {mon.fainted && <span className={cx(styles.partyTag, styles.partyTagDown)}>desmaiado</span>}
-                    <StatusBadge status={mon.status} />
-                  </div>
-                  <div className={styles.partyTypes}>
-                    {typesOf(mon.species).map((t) => (
-                      <TypeBadge key={t} type={t} compact />
-                    ))}
-                    <span className={styles.partyItem}>{mon.item}</span>
-                  </div>
-                </div>
-                <div className={styles.partyHp}>
-                  <HpBar hp={mon.hp} maxHp={mon.maxHp} showNumbers />
-                </div>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-
-      {!forced && (
-        <div className={styles.partyActions}>
-          <Button variant="ghost" onClick={onCancel}>
-            Cancelar
-          </Button>
-        </div>
-      )}
-    </Modal>
+        <ul className={styles.partyGrid}>
+          {team.map((mon, i) => {
+            const canPick = allowed.includes(i);
+            const ratio = mon.maxHp > 0 ? mon.hp / mon.maxHp : 0;
+            return (
+              <li key={mon.species}>
+                <button
+                  className={cx(styles.partyCell, i === active && styles.partyCellActive, mon.fainted && styles.partyCellFainted)}
+                  disabled={!canPick}
+                  onClick={() => onPick(i)}
+                  title={`${mon.species} · ${mon.item} · ${mon.ability}`}
+                >
+                  <PokemonEmblem species={mon.species} types={typesOf(mon.species)} size={40} still fainted={mon.fainted} />
+                  <span className={styles.partyCellInfo}>
+                    <span className={styles.partyCellName}>
+                      {mon.species}
+                      <StatusBadge status={mon.status} />
+                    </span>
+                    <span className={styles.partyBar}>
+                      <span className={cx(styles.partyBarFill, styles[`bar-${hpTone(ratio)}`])} style={{ width: `${ratio * 100}%` }} />
+                    </span>
+                    <span className={styles.partyCellHp}>
+                      {mon.fainted ? "desmaiado" : i === active ? "em campo" : `${mon.hp}/${mon.maxHp}`}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </>
   );
 }
