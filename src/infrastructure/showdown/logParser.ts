@@ -1,4 +1,4 @@
-import type { BattleEvent, BattleSide } from "@/domain";
+import type { BattleEvent, BattleSide, HpSource, MessageTag } from "@/domain";
 
 const STAT_NAMES: Record<string, string> = {
   atk: "Ataque",
@@ -108,6 +108,19 @@ function hpChangeText(change: "damage" | "heal", who: Ident, from: string | null
   }
 }
 
+/** Groups an HP change's `[from]` tag for the battle log. */
+function hpSource(from: string | null): HpSource | undefined {
+  if (!from) return undefined;
+  if (from.startsWith("item:")) return "item";
+  if (["psn", "tox", "brn"].includes(from)) return "status";
+  if (["Sandstorm", "Hail"].includes(from)) return "weather";
+  if (from.toLowerCase() === "recoil") return "recoil";
+  if (from === "drain") return "drain";
+  return "effect";
+}
+
+const msg = (text: string, tag?: MessageTag): BattleEvent => (tag ? { kind: "message", text, tag } : { kind: "message", text });
+
 /**
  * Translates Showdown protocol lines into battle events.
  * Hidden-information lines come in pairs after `|split|`: the first is the exact
@@ -162,7 +175,9 @@ function translateLine(cmd: string, args: string[]): BattleEvent | null {
       const who = ident(args[0]);
       const { hp, maxHp } = parseHp(args[1]);
       const change = cmd === "-damage" ? "damage" : "heal";
-      const text = hpChangeText(change, who, fromTag(args));
+      const from = fromTag(args);
+      const text = hpChangeText(change, who, from);
+      const source = hpSource(from);
       return {
         kind: "hp",
         side: who.side,
@@ -170,6 +185,7 @@ function translateLine(cmd: string, args: string[]): BattleEvent | null {
         ...shownHp(who.side, hp, maxHp),
         change,
         ...(text ? { text } : {}),
+        ...(source ? { source } : {}),
       };
     }
 
@@ -212,56 +228,56 @@ function translateLine(cmd: string, args: string[]): BattleEvent | null {
     case "cant": {
       const who = ident(args[0]);
       const reason = args[1] ?? "";
-      return { kind: "message", text: `${who.label} ${CANT_TEXT[reason] ?? "não conseguiu se mover"}!` };
+      return msg(`${who.label} ${CANT_TEXT[reason] ?? "não conseguiu se mover"}!`, "status");
     }
 
     case "-supereffective":
-      return { kind: "message", text: "É super efetivo!" };
+      return msg("É super efetivo!", "hit");
     case "-resisted":
-      return { kind: "message", text: "Não é muito efetivo..." };
+      return msg("Não é muito efetivo...", "hit");
     case "-crit":
-      return { kind: "message", text: "Um golpe crítico!" };
+      return msg("Um golpe crítico!", "hit");
     case "-immune":
-      return { kind: "message", text: `Não afeta ${ident(args[0]).label}...` };
+      return msg(`Não afeta ${ident(args[0]).label}...`, "hit");
     case "-miss":
-      return { kind: "message", text: `${ident(args[1] ?? args[0]).label} desviou do ataque!` };
+      return msg(`${ident(args[1] ?? args[0]).label} desviou do ataque!`, "hit");
     case "-fail":
-      return { kind: "message", text: "Mas falhou!" };
+      return msg("Mas falhou!", "hit");
     case "-ohko":
-      return { kind: "message", text: "É um nocaute instantâneo!" };
+      return msg("É um nocaute instantâneo!", "hit");
     case "-hitcount":
-      return { kind: "message", text: `Acertou ${args[1]} vez(es)!` };
+      return msg(`Acertou ${args[1]} vez(es)!`, "hit");
 
     case "-ability": {
       const who = ident(args[0]);
-      return { kind: "message", text: `[${args[1]} de ${who.label}]` };
+      return msg(`[${args[1]} de ${who.label}]`, "ability");
     }
     case "-enditem": {
       const who = ident(args[0]);
       const eaten = args.includes("[eat]");
-      return { kind: "message", text: eaten ? `${who.label} comeu a ${args[1]}!` : `${who.label} perdeu ${args[1]}.` };
+      return msg(eaten ? `${who.label} comeu a ${args[1]}!` : `${who.label} perdeu ${args[1]}.`, "item");
     }
     case "-start": {
       const who = ident(args[0]);
       const effect = (args[1] ?? "").replace(/^move: /, "");
-      if (effect === "confusion") return { kind: "message", text: `${who.label} ficou confuso!` };
-      if (effect === "Substitute") return { kind: "message", text: `${who.label} criou um substituto!` };
-      if (effect === "Leech Seed") return { kind: "message", text: `${who.label} foi semeado!` };
-      if (effect === "Taunt") return { kind: "message", text: `${who.label} caiu na provocação!` };
+      if (effect === "confusion") return msg(`${who.label} ficou confuso!`, "effect");
+      if (effect === "Substitute") return msg(`${who.label} criou um substituto!`, "effect");
+      if (effect === "Leech Seed") return msg(`${who.label} foi semeado!`, "effect");
+      if (effect === "Taunt") return msg(`${who.label} caiu na provocação!`, "effect");
       return null;
     }
     case "-end": {
       const who = ident(args[0]);
       const effect = (args[1] ?? "").replace(/^move: /, "");
-      if (effect === "confusion") return { kind: "message", text: `${who.label} não está mais confuso!` };
-      if (effect === "Substitute") return { kind: "message", text: `O substituto de ${who.label} sumiu!` };
-      if (effect === "Taunt") return { kind: "message", text: `${who.label} não está mais provocado.` };
+      if (effect === "confusion") return msg(`${who.label} não está mais confuso!`, "effect");
+      if (effect === "Substitute") return msg(`O substituto de ${who.label} sumiu!`, "effect");
+      if (effect === "Taunt") return msg(`${who.label} não está mais provocado.`, "effect");
       return null;
     }
     case "-activate": {
       const effect = (args[1] ?? "").replace(/^(move|ability|item): /, "");
-      if (effect === "confusion") return { kind: "message", text: `${ident(args[0]).label} está confuso!` };
-      if (effect === "Substitute") return { kind: "message", text: "O substituto recebeu o dano!" };
+      if (effect === "confusion") return msg(`${ident(args[0]).label} está confuso!`, "effect");
+      if (effect === "Substitute") return msg("O substituto recebeu o dano!", "effect");
       return null;
     }
 

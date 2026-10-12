@@ -889,22 +889,6 @@
   margin-top: 16px;
 }
 
-.log {
-  margin: 12px 0 0;
-  padding: 12px 12px 12px 34px;
-  max-height: 52dvh;
-  overflow: auto;
-  border-radius: 12px;
-  background: rgba(5, 9, 20, 0.45);
-  border: 1px solid var(--line);
-  font-size: 16px;
-  line-height: 1.55;
-}
-
-.log li::marker {
-  color: var(--text-faint);
-}
-
 /* ============================================================
    Result
    ============================================================ */
@@ -1314,5 +1298,46 @@
 @keyframes party-fade {
   from {
     opacity: 0;
+  }
+}
+
+/* ============================================================
+   Layout: battle column + always-open history
+   ============================================================ */
+.layout {
+  width: min(1380px, 100%);
+  margin: 0 auto;
+  padding: 10px 16px 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+/* Inside the layout the battle column no longer centers or pads itself. */
+.layout > .page {
+  width: 100%;
+  padding: 0;
+}
+
+.logColumn {
+  height: 340px;
+  display: flex;
+  flex-direction: column;
+}
+
+.logColumn > * {
+  flex: 1;
+}
+
+@media (min-width: 1180px) {
+  .layout {
+    grid-template-columns: minmax(0, 980px) minmax(300px, 360px);
+    justify-content: center;
+    align-items: start;
+  }
+  .logColumn {
+    position: sticky;
+    top: 10px;
+    height: calc(100dvh - 20px);
   }
 }

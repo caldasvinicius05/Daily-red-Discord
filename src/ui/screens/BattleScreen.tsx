@@ -5,13 +5,14 @@ import type { PlayerAction } from "@/domain";
 import { api, ApiError } from "../api/client";
 import type { BattleDTO } from "../api/types";
 import { useSpeciesTypes } from "../AppContext";
+import { BattleLog } from "../battle/BattleLog";
 import { BattleScene } from "../battle/BattleScene";
 import { MessageBox } from "../battle/MessageBox";
 import { MovePanel } from "../battle/MovePanel";
 import { PartyPanel } from "../battle/PartyPanel";
 import { ResultOverlay } from "../battle/ResultOverlay";
 import { usePlayback } from "../battle/usePlayback";
-import { BackIcon, FastIcon, FlagIcon, ScrollIcon } from "../components/icons";
+import { BackIcon, FastIcon, FlagIcon } from "../components/icons";
 import { Button, cx, Modal } from "../components/ui";
 import { updateSettings, useSettings } from "../lib/settings";
 import styles from "../battle/battle.module.css";
@@ -29,7 +30,6 @@ export function BattleScreen({ initial, onExit, onPractice }: Props) {
   const [battle, setBattle] = useState(initial);
   const [submitting, setSubmitting] = useState(false);
   const [partyOpen, setPartyOpen] = useState(false);
-  const [logOpen, setLogOpen] = useState(false);
   const [forfeitOpen, setForfeitOpen] = useState(false);
   const [showResult, setShowResult] = useState(Boolean(initial.result));
   const [error, setError] = useState<string | null>(null);
@@ -108,106 +108,90 @@ export function BattleScreen({ initial, onExit, onPractice }: Props) {
   const typingSpeed = settings.speed === "instant" ? 0 : settings.speed === "fast" ? 6 : 12;
 
   return (
-    <main className={styles.page}>
-      <header className={styles.hud}>
-        <Button variant="ghost" size="sm" icon={<BackIcon />} onClick={onExit} aria-label="Início">
-          <span className={styles.hideNarrow}>Início</span>
-        </Button>
-        <div className={styles.hudCenter}>
-          <span className={cx(styles.modeChip, battle.mode === "daily" ? styles.modeDaily : styles.modePractice, "pixel")}>
-            {battle.mode === "daily" ? `DIÁRIA #${battle.challengeNumber}` : "TREINO"}
-          </span>
-          <span className={styles.turn}>Turno {Math.max(1, playback.display.turn)}</span>
-        </div>
-        <div className={styles.hudRight}>
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label="Alternar velocidade"
-            title="Velocidade"
-            icon={<FastIcon />}
-            onClick={() => updateSettings({ speed: settings.speed === "normal" ? "fast" : settings.speed === "fast" ? "instant" : "normal" })}
-          >
-            <span className={styles.hideNarrow}>{settings.speed === "normal" ? "1×" : settings.speed === "fast" ? "2×" : "∞"}</span>
+    <main className={styles.layout}>
+      <div className={styles.page}>
+        <header className={styles.hud}>
+          <Button variant="ghost" size="sm" icon={<BackIcon />} onClick={onExit} aria-label="Início">
+            <span className={styles.hideNarrow}>Início</span>
           </Button>
-          <Button variant="ghost" size="sm" aria-label="Histórico" icon={<ScrollIcon />} onClick={() => setLogOpen(true)}>
-            <span className={styles.hideNarrow}>Histórico</span>
-          </Button>
-          {!ended && (
-            <Button variant="danger" size="sm" aria-label="Desistir" icon={<FlagIcon />} onClick={() => setForfeitOpen(true)} disabled={!idle}>
-              <span className={styles.hideNarrow}>Desistir</span>
+          <div className={styles.hudCenter}>
+            <span className={cx(styles.modeChip, battle.mode === "daily" ? styles.modeDaily : styles.modePractice, "pixel")}>
+              {battle.mode === "daily" ? `DIÁRIA #${battle.challengeNumber}` : "TREINO"}
+            </span>
+            <span className={styles.turn}>Turno {Math.max(1, playback.display.turn)}</span>
+          </div>
+          <div className={styles.hudRight}>
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label="Alternar velocidade"
+              title="Velocidade"
+              icon={<FastIcon />}
+              onClick={() => updateSettings({ speed: settings.speed === "normal" ? "fast" : settings.speed === "fast" ? "instant" : "normal" })}
+            >
+              <span className={styles.hideNarrow}>{settings.speed === "normal" ? "1×" : settings.speed === "fast" ? "2×" : "∞"}</span>
             </Button>
+            {!ended && (
+              <Button variant="danger" size="sm" aria-label="Desistir" icon={<FlagIcon />} onClick={() => setForfeitOpen(true)} disabled={!idle}>
+                <span className={styles.hideNarrow}>Desistir</span>
+              </Button>
+            )}
+          </div>
+        </header>
+
+        {/* The party picker opens over the arena, so the battle stays in view. */}
+        <div className={styles.sceneWrap}>
+          <BattleScene
+            display={playback.display}
+            effect={playback.effect}
+            playerOrder={view.player.team.map((m) => m.species)}
+            redOrder={redOrder}
+          />
+          {(partyOpen || forcedSwitch) && (
+            <PartyPanel
+              team={view.player.team}
+              active={view.player.active}
+              allowed={view.choices.switches}
+              forced={forcedSwitch}
+              onPick={(teamIndex) => act({ type: "switch", teamIndex })}
+              onCancel={() => setPartyOpen(false)}
+            />
           )}
         </div>
-      </header>
 
-      {/* The party picker opens over the arena, so the battle stays in view. */}
-      <div className={styles.sceneWrap}>
-        <BattleScene
-          display={playback.display}
-          effect={playback.effect}
-          playerOrder={view.player.team.map((m) => m.species)}
-          redOrder={redOrder}
+        <MessageBox
+          text={message}
+          speedMs={typingSpeed}
+          waiting={playback.playing}
+          {...(playback.playing ? { onClick: playback.skip } : {})}
         />
-        {(partyOpen || forcedSwitch) && (
-          <PartyPanel
-            team={view.player.team}
-            active={view.player.active}
-            allowed={view.choices.switches}
-            forced={forcedSwitch}
-            onPick={(teamIndex) => act({ type: "switch", teamIndex })}
-            onCancel={() => setPartyOpen(false)}
+
+        {error && <p className={styles.error}>{error}</p>}
+
+        {!ended && (
+          <MovePanel
+            moves={view.choices.moves}
+            targetTypes={redActive ? typesOf(redActive) : null}
+            disabled={!idle || view.phase !== "move"}
+            canSwitch={view.choices.switches.length > 0}
+            onMove={(move) => act({ type: "move", move })}
+            onSwitch={() => setPartyOpen(true)}
           />
+        )}
+
+        {ended && !showResult && (
+          <div className={styles.endActions}>
+            <Button variant="primary" onClick={() => setShowResult(true)}>
+              Ver resultado
+            </Button>
+          </div>
         )}
       </div>
 
-      <MessageBox
-        text={message}
-        speedMs={typingSpeed}
-        waiting={playback.playing}
-        {...(playback.playing ? { onClick: playback.skip } : {})}
-      />
-
-      {error && <p className={styles.error}>{error}</p>}
-
-      {!ended && (
-        <MovePanel
-          moves={view.choices.moves}
-          targetTypes={redActive ? typesOf(redActive) : null}
-          disabled={!idle || view.phase !== "move"}
-          canSwitch={view.choices.switches.length > 0}
-          onMove={(move) => act({ type: "move", move })}
-          onSwitch={() => setPartyOpen(true)}
-        />
-      )}
-
-      {ended && !showResult && (
-        <div className={styles.endActions}>
-          <Button variant="primary" onClick={() => setShowResult(true)}>
-            Ver resultado
-          </Button>
-        </div>
-      )}
-
-      {logOpen && (
-        <Modal onClose={() => setLogOpen(false)} labelledBy="log-title">
-          <h2 id="log-title" className={styles.partyTitle}>
-            Histórico da batalha
-          </h2>
-          <ol className={styles.log}>
-            {playback.log.map((line, i) => (
-              <li key={i} className="pixel">
-                {line}
-              </li>
-            ))}
-          </ol>
-          <div className={styles.partyActions}>
-            <Button variant="secondary" onClick={() => setLogOpen(false)}>
-              Fechar
-            </Button>
-          </div>
-        </Modal>
-      )}
+      {/* History stays open beside the battle (below it on narrow screens). */}
+      <div className={styles.logColumn}>
+        <BattleLog events={playback.history} />
+      </div>
 
       {forfeitOpen && (
         <Modal onClose={() => setForfeitOpen(false)} labelledBy="forfeit-title">

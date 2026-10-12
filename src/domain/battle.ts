@@ -7,17 +7,32 @@ export type PlayerAction =
 
 export type BattleSide = "player" | "red";
 
+/** Lets the battle log group narration lines: hit results, items, abilities, lasting effects, status. */
+export type MessageTag = "hit" | "item" | "ability" | "effect" | "status";
+
+export type HpSource = "item" | "status" | "weather" | "recoil" | "drain" | "effect";
+
 /** One line of battle narration plus the structured data the UI animates from. */
 export type BattleEvent =
   | { kind: "turn"; turn: number; text: string }
   | { kind: "switch"; side: BattleSide; species: string; hp: number; maxHp: number; text: string }
   | { kind: "move"; side: BattleSide; species: string; move: string; text: string }
-  | { kind: "hp"; side: BattleSide; species: string; hp: number; maxHp: number; change: "damage" | "heal"; text?: string }
+  | {
+      kind: "hp";
+      side: BattleSide;
+      species: string;
+      hp: number;
+      maxHp: number;
+      change: "damage" | "heal";
+      text?: string;
+      /** What caused it when it isn't the last move: an item, poison, weather, recoil... */
+      source?: HpSource;
+    }
   | { kind: "faint"; side: BattleSide; species: string; text: string }
   | { kind: "status"; side: BattleSide; species: string; status: string | null; text: string }
   | { kind: "boost"; side: BattleSide; species: string; stat: string; amount: number; text: string }
   | { kind: "weather"; weather: string | null; text: string }
-  | { kind: "message"; text: string }
+  | { kind: "message"; text: string; tag?: MessageTag }
   | { kind: "end"; winner: BattleSide | null; text: string };
 
 export type Boosts = Partial<Record<"atk" | "def" | "spa" | "spd" | "spe" | "accuracy" | "evasion", number>>;
