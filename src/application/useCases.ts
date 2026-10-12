@@ -133,7 +133,7 @@ async function championOfDay(deps: Deps, date: GameDate): Promise<string> {
   const earlierThisWeek = await deps.dailyChampions.listBetween(weekStart(date), addDays(date, -1));
   const picked = pickChampion(
     CHAMPIONS.map((c) => c.id),
-    earlierThisWeek.map((d) => d.championId),
+    earlierThisWeek.map((d) => getChampion(d.championId).id),
     deps.random,
   );
   // If another request picked first, its choice wins.

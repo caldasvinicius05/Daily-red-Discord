@@ -17,15 +17,13 @@ const set = (s: PokemonSet): PokemonSet => s;
 
 // ---------- Kanto (Blue) ----------
 
-const bluePidgeot = set({ species: "Pidgeot", item: "Leftovers", ability: "Keen Eye", nature: "Jolly", evs: physical, moves: ["Return", "Aerial Ace", "Quick Attack", "Steel Wing"] });
-const blueAlakazam = set({ species: "Alakazam", item: "Leftovers", ability: "Synchronize", nature: "Timid", evs: special, moves: ["Psychic", "Calm Mind", "Recover", "Fire Punch"] });
+// Blue as the Viridian City Gym Leader in HeartGold/SoulSilver (the 16th badge).
+const blueExeggutor = set({ species: "Exeggutor", item: "Leftovers", ability: "Chlorophyll", nature: "Modest", evs: bulkySpecial, moves: ["Psychic", "Giga Drain", "Sleep Powder", "Explosion"] });
+const blueArcanine = set({ species: "Arcanine", item: "Leftovers", ability: "Intimidate", nature: "Naive", evs: mixed, moves: ["Fire Blast", "Extreme Speed", "Crunch", "Iron Tail"] });
 const blueRhydon = set({ species: "Rhydon", item: "Leftovers", ability: "Rock Head", nature: "Adamant", evs: bulkyPhysical, moves: ["Earthquake", "Rock Slide", "Megahorn", "Double-Edge"] });
 const blueGyarados = set({ species: "Gyarados", item: "Leftovers", ability: "Intimidate", nature: "Adamant", evs: physical, moves: ["Dragon Dance", "Double-Edge", "Earthquake", "Taunt"] });
-const blueArcanine = set({ species: "Arcanine", item: "Leftovers", ability: "Intimidate", nature: "Naive", evs: mixed, moves: ["Fire Blast", "Extreme Speed", "Crunch", "Iron Tail"] });
-const blueExeggutor = set({ species: "Exeggutor", item: "Leftovers", ability: "Chlorophyll", nature: "Modest", evs: bulkySpecial, moves: ["Psychic", "Giga Drain", "Sleep Powder", "Explosion"] });
-const blueVenusaur = set({ species: "Venusaur", item: "Leftovers", ability: "Overgrow", nature: "Bold", evs: wall, moves: ["Leech Seed", "Sleep Powder", "Sludge Bomb", "Giga Drain"] });
-const blueCharizard = set({ species: "Charizard", item: "Charcoal", ability: "Blaze", nature: "Naive", evs: mixed, moves: ["Fire Blast", "Dragon Claw", "Earthquake", "Aerial Ace"] });
-const blueBlastoise = set({ species: "Blastoise", item: "Leftovers", ability: "Torrent", nature: "Bold", evs: wall, moves: ["Surf", "Ice Beam", "Rapid Spin", "Toxic"] });
+const blueMachamp = set({ species: "Machamp", item: "Leftovers", ability: "Guts", nature: "Adamant", evs: bulkyPhysical, moves: ["Cross Chop", "Rock Slide", "Earthquake", "Bulk Up"] });
+const bluePidgeot = set({ species: "Pidgeot", item: "Leftovers", ability: "Keen Eye", nature: "Jolly", evs: physical, moves: ["Return", "Aerial Ace", "Quick Attack", "Steel Wing"] });
 
 // ---------- Johto (Lance, Red) ----------
 
@@ -61,34 +59,15 @@ const wallaceMilotic = set({ species: "Milotic", item: "Leftovers", ability: "Ma
 
 /**
  * The opponents. Rosters follow the games' final battles; sets are standard Gen 3
- * competitive builds, validated against Showdown's rules in the tests. Blue's three
- * entries are the three teams he can have depending on the starter you picked, and
- * count as separate champions for the weekly rotation.
+ * competitive builds, validated against Showdown's rules in the tests.
  */
 export const CHAMPIONS: readonly Champion[] = [
   {
-    id: "blue-1",
+    id: "blue",
     name: "Blue",
-    variant: "Time 1",
     title: "Campeão de Kanto",
     location: "Platô Indigo",
-    team: [bluePidgeot, blueAlakazam, blueRhydon, blueGyarados, blueArcanine, blueVenusaur],
-  },
-  {
-    id: "blue-2",
-    name: "Blue",
-    variant: "Time 2",
-    title: "Campeão de Kanto",
-    location: "Platô Indigo",
-    team: [bluePidgeot, blueAlakazam, blueRhydon, blueExeggutor, blueGyarados, blueCharizard],
-  },
-  {
-    id: "blue-3",
-    name: "Blue",
-    variant: "Time 3",
-    title: "Campeão de Kanto",
-    location: "Platô Indigo",
-    team: [bluePidgeot, blueAlakazam, blueRhydon, blueArcanine, blueExeggutor, blueBlastoise],
+    team: [blueExeggutor, blueArcanine, blueRhydon, blueGyarados, blueMachamp, bluePidgeot],
   },
   {
     id: "lance",
@@ -120,8 +99,12 @@ export const CHAMPIONS: readonly Champion[] = [
   },
 ];
 
+/** Retired ids still found in saved battles and daily picks: Blue used to have three teams. */
+const LEGACY_IDS: Readonly<Record<string, string>> = { "blue-1": "blue", "blue-2": "blue", "blue-3": "blue" };
+
 export function getChampion(id: string): Champion {
-  const champion = CHAMPIONS.find((c) => c.id === id);
+  const resolved = LEGACY_IDS[id] ?? id;
+  const champion = CHAMPIONS.find((c) => c.id === resolved);
   if (!champion) throw new Error(`Unknown champion: ${id}`);
   return champion;
 }

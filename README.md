@@ -10,9 +10,17 @@ Todo mundo do servidor recebe **o mesmo time de seis Pokémon** a cada dia e tem
 
 - **Time do dia:** uma seed baseada na data sorteia 6 Pokémon entre todos os 193 em forma final das gerações 1 a 3 (sem lendários), com sets competitivos gerados pelo gerador da Gen 3 do Showdown, todos no nível 100. O "dia" segue o horário de São Paulo, então todos do servidor estão sempre no mesmo desafio.
 - **Mesma sorte para todos:** a diária usa a mesma seed de batalha para todo mundo — quem fizer as mesmas escolhas tem exatamente o mesmo resultado.
-- **Campeões:** Blue (3 times), Lance, Red, Steven e Wallace, com os times dos jogos e sets competitivos de Gen 3. O campeão do dia é sorteado entre os que **ainda não apareceram na semana** (segunda a domingo) e fica guardado no banco — com 7 times, cada um aparece uma vez por semana em ordem aleatória. O campeão começa sempre com o primeiro Pokémon do time e escolhe golpes com base em cálculo de dano.
+- **Campeões:** Blue (time do Ginásio de Viridian em HeartGold/SoulSilver), Lance, Red, Steven e Wallace, com os times dos jogos e sets competitivos de Gen 3. O campeão do dia é sorteado entre os que **ainda não apareceram na semana** (segunda a domingo) e fica guardado no banco. Com 5 campeões, todos aparecem uma vez nos primeiros dias e os dois últimos dias da semana sorteiam uma nova rodada, sem repetir o campeão do dia anterior. O campeão começa sempre com o primeiro Pokémon do time e escolhe golpes com base em cálculo de dano.
 - **Treino:** ilimitado, com o mesmo time do dia e um campeão sorteado a cada partida.
 - **Batalha:** motor do Pokémon Showdown com as regras da Gen 3 (categoria física/especial pelo tipo do golpe, mecânicas da época).
+
+## Versões
+
+| Versão | Nome | O que mudou |
+|---|---|---|
+| 1.0 | Daily Red | Uma batalha por dia contra o Red |
+| 2.0 | Daily Champion | Campeões das gerações 1 a 3 com rodízio semanal, pool com todas as formas finais |
+| 2.1 | Daily Battle | Um único time do Blue (Viridian, HGSS), sem Choice Band no time do jogador, tipos visíveis na troca |
 
 ## Funcionalidades
 
@@ -20,7 +28,7 @@ Todo mundo do servidor recebe **o mesmo time de seis Pokémon** a cada dia e tem
 - Escolha do Pokémon inicial com leitura rápida do confronto
 - Batalha animada: barras de HP, narração em português, clima, mudanças de atributo, dicas de efetividade
 - Histórico sempre aberto ao lado, com dano/cura exatos, itens, status e trocas
-- Painel de troca compacto sobre a arena
+- Painel de troca compacto sobre a arena, com os tipos de cada Pokémon
 - Resultado com texto para compartilhar e botão **Postar no Discord**
 - Painel **Na atividade agora** com o status do dia de quem está na atividade
 - Comando **`/dailybattle`** com o ranking de hoje no chat

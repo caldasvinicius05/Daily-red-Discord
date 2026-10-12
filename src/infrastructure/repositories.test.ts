@@ -114,7 +114,7 @@ describe.each(adapters)("%s repositories", (_name, make) => {
     expect(await dailyChampions.claim("2026-10-12", "lance")).toBe("lance");
     expect(await dailyChampions.claim("2026-10-12", "steven")).toBe("lance");
     await dailyChampions.claim("2026-10-13", "red");
-    await dailyChampions.claim("2026-10-20", "blue-1");
+    await dailyChampions.claim("2026-10-20", "blue");
     expect(await dailyChampions.listBetween("2026-10-12", "2026-10-18")).toEqual([
       { date: "2026-10-12", championId: "lance" },
       { date: "2026-10-13", championId: "red" },

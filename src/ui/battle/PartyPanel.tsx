@@ -5,6 +5,7 @@ import type { PlayerMonView } from "@/domain";
 import { useSpeciesTypes } from "../AppContext";
 import { PokemonEmblem } from "../components/PokemonEmblem";
 import { cx, hpTone, StatusBadge } from "../components/ui";
+import { TYPE_NAMES_PT, typeColor, typeTextColor } from "../lib/types";
 import styles from "./battle.module.css";
 
 interface Props {
@@ -69,6 +70,13 @@ export function PartyPanel({ team, active, allowed, forced, onPick, onCancel }: 
                     <span className={styles.partyCellName}>
                       {mon.species}
                       <StatusBadge status={mon.status} />
+                    </span>
+                    <span className={styles.partyTypes}>
+                      {typesOf(mon.species).map((type) => (
+                        <span key={type} className={styles.partyType} style={{ background: typeColor(type), color: typeTextColor(type) }}>
+                          {TYPE_NAMES_PT[type] ?? type}
+                        </span>
+                      ))}
                     </span>
                     <span className={styles.partyBar}>
                       <span className={cx(styles.partyBarFill, styles[`bar-${hpTone(ratio)}`])} style={{ width: `${ratio * 100}%` }} />

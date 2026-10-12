@@ -1253,6 +1253,23 @@
   padding: 0 4px;
 }
 
+.partyTypes {
+  display: flex;
+  gap: 3px;
+  min-width: 0;
+}
+
+.partyType {
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+}
+
 .partyBar {
   position: relative;
   height: 5px;

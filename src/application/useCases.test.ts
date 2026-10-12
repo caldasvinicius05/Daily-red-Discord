@@ -175,13 +175,14 @@ describe("daily champion", () => {
     expect(battle.champion).toEqual(champion);
   });
 
-  it("never repeats within a week, and the rotation restarts on Monday", async () => {
+  it("shows every champion before repeating one, and the rotation restarts on Monday", async () => {
     const week: string[] = [];
     for (let day = 12; day <= 18; day++) {
       now = at(`2026-10-${day}`); // Monday 12 → Sunday 18
       week.push((await app.getToday(ALICE.id)).champion.id);
     }
-    expect(new Set(week).size).toBe(7);
+    expect(new Set(week.slice(0, CHAMPIONS.length)).size).toBe(CHAMPIONS.length);
+    for (let i = 1; i < week.length; i++) expect(week[i]).not.toBe(week[i - 1]);
     now = at("2026-10-19"); // next Monday: anyone may come back
     expect(CHAMPIONS.map((c) => c.id)).toContain((await app.getToday(ALICE.id)).champion.id);
   });

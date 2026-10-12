@@ -69,9 +69,23 @@ describe("champion rotation", () => {
     expect([...week].sort()).toEqual(ids);
   });
 
-  it("allows repeats only once every champion was used", () => {
-    expect(pickChampion(["a", "b"], ["a", "b"], () => 0.99)).toBe("b");
+  it("starts a new round once every champion was used, never repeating the day before", () => {
     expect(pickChampion(["a", "b"], ["a"], () => 0.99)).toBe("b");
+    expect(pickChampion(["a", "b"], ["a", "b"], () => 0.99)).toBe("a");
+    expect(pickChampion(["a", "b", "c"], ["c", "a", "b"], () => 0.99)).toBe("c");
+    expect(pickChampion(["a", "b", "c"], ["c", "a", "b", "a"], () => 0.99)).toBe("c");
+  });
+
+  it("with five champions over seven days: everyone once, then two more without a back-to-back repeat", () => {
+    const ids = ["a", "b", "c", "d", "e"];
+    for (const seed of ["s1", "s2", "s3", "s4"]) {
+      const random = createRandom(seed);
+      const week: string[] = [];
+      for (let day = 0; day < 7; day++) week.push(pickChampion(ids, week, random));
+      expect([...week.slice(0, 5)].sort()).toEqual(ids);
+      expect(week[5]).not.toBe(week[4]);
+      expect(week[6]).not.toBe(week[5]);
+    }
   });
 });
 

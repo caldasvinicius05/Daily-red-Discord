@@ -31,9 +31,17 @@ describe.each(CHAMPIONS.map((c) => [c.id, c] as const))("%s", (_id, champion) =>
 });
 
 describe("champions", () => {
-  it("are seven, with unique ids", () => {
-    expect(CHAMPIONS).toHaveLength(7);
-    expect(new Set(CHAMPIONS.map((c) => c.id)).size).toBe(7);
+  it("are five, with unique ids", () => {
+    expect(CHAMPIONS).toHaveLength(5);
+    expect(new Set(CHAMPIONS.map((c) => c.id)).size).toBe(5);
+  });
+
+  it("give Blue his HeartGold/SoulSilver Viridian Gym team", () => {
+    expect(summarizeChampion(getChampion("blue")).team).toEqual(["Exeggutor", "Arcanine", "Rhydon", "Gyarados", "Machamp", "Pidgeot"]);
+  });
+
+  it("resolve Blue's retired team ids to the current Blue", () => {
+    for (const id of ["blue-1", "blue-2", "blue-3"]) expect(getChampion(id).id).toBe("blue");
   });
 
   it("include Lance's three Dragonite (duplicate species must be supported)", () => {
