@@ -109,7 +109,7 @@ function Combatant({ side, mon, effect }: { side: BattleSide; mon: MonDisplay | 
       )}
     >
       <div ref={layerRef} className={styles.fxLayer}>
-        <PokemonEmblem species={mon.species} types={typesOf(mon.species)} size="100%" />
+        <PokemonEmblem species={mon.species} types={typesOf(mon.species)} size="100%" side={side} />
         <span className={styles.arrows} />
       </div>
     </div>

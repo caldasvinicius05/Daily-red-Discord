@@ -6,6 +6,26 @@
   transition: opacity 0.4s var(--ease-out);
 }
 
+.sprite {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Subtle idle bobbing when active in arena (when still is false) */
+.emblem:not(.still) .sprite {
+  animation: sprite-idle 2.4s ease-in-out infinite;
+  will-change: transform;
+}
+
 .layer {
   position: absolute;
   inset: 0;
@@ -14,27 +34,28 @@
   overflow: visible;
 }
 
-/* Static soft shadow under the orb (cheaper than filter: drop-shadow). */
+/* Static soft shadow under the orb or sprite (cheaper than filter: drop-shadow). */
 .shadow {
   position: absolute;
-  left: 18%;
-  right: 18%;
+  left: 14%;
+  right: 14%;
   bottom: 2%;
-  height: 16%;
+  height: 14%;
   border-radius: 50%;
   background: radial-gradient(closest-side, rgba(0, 0, 0, 0.45), transparent);
   transform: translateY(18%);
 }
 
-/* Glow behind the orb: a plain gradient layer, animated with transform/opacity only. */
+/* Glow behind the emblem: a plain gradient layer, animated with transform/opacity only. */
 .aura {
   position: absolute;
-  inset: 0;
+  inset: 4%;
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    color-mix(in srgb, var(--c1) 55%, transparent) 50%,
-    color-mix(in srgb, var(--c2) 0%, transparent) 72%
+    color-mix(in srgb, var(--c1) 32%, transparent) 40%,
+    color-mix(in srgb, var(--c2) 10%, transparent) 65%,
+    transparent 75%
   );
   animation: aura 3.2s ease-in-out infinite;
   will-change: transform, opacity;
@@ -50,6 +71,10 @@
 .still .ring {
   animation: none;
   will-change: auto;
+}
+
+.still .aura {
+  opacity: 0.4;
 }
 
 .glyph {
@@ -102,3 +127,14 @@
     transform: rotate(360deg);
   }
 }
+
+@keyframes sprite-idle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+

@@ -13,7 +13,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "tunnel": "cloudflared tunnel --url http://localhost:3000",
-    "register-commands": "node scripts/register-commands.ts"
+    "register-commands": "node scripts/register-commands.ts",
+    "sync-sprites": "node scripts/sync-sprites.ts"
   },
   "dependencies": {
     "@discord/embedded-app-sdk": "^2.5.0",
