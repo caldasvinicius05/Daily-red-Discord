@@ -20,8 +20,8 @@ interface Props {
 }
 
 /**
- * Compact party picker drawn over the arena's top-left corner (rendered inside the
- * scene wrapper), so the battle stays visible while choosing who comes in.
+ * Party picker that covers the whole arena (rendered inside the scene wrapper) while
+ * choosing who comes in; the battle shows again once the switch is made.
  */
 export function PartyPanel({ team, active, allowed, forced, onPick, onCancel }: Props) {
   const typesOf = useSpeciesTypes();
@@ -65,7 +65,7 @@ export function PartyPanel({ team, active, allowed, forced, onPick, onCancel }: 
                   onClick={() => onPick(i)}
                   title={`${mon.species} · ${mon.item} · ${mon.ability}`}
                 >
-                  <PokemonEmblem species={mon.species} types={typesOf(mon.species)} size={40} still fainted={mon.fainted} />
+                  <PokemonEmblem species={mon.species} types={typesOf(mon.species)} size={56} still fainted={mon.fainted} />
                   <span className={styles.partyCellInfo}>
                     <span className={styles.partyCellName}>
                       {mon.species}
