@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
   },
   // pokemon-showdown is a large CommonJS package; keep it out of the server bundle.
   serverExternalPackages: ["pokemon-showdown"],
+  // Migrations are read from disk at startup, not imported, so the file tracer can't see
+  // them. Without this, serverless deploys (Vercel) ship without the SQL files.
+  outputFileTracingIncludes: {
+    "/api/**": ["./drizzle/**/*"],
+  },
   // In dev, the Activity reaches us through a Cloudflare tunnel and Discord's proxy;
   // Next blocks dev assets from other origins unless they're listed here.
   allowedDevOrigins: ["*.trycloudflare.com", "*.discordsays.com"],
