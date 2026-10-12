@@ -1,9 +1,17 @@
 import { and, eq, gte, inArray, isNotNull, lte } from "drizzle-orm";
 import { ConflictError } from "@/application/errors";
-import type { BattleRecord, BattleRepository, DailyChampionRepository, Player, PlayerRepository } from "@/application/ports";
+import type {
+  BattleRecord,
+  BattleRepository,
+  DailyAnnouncement,
+  DailyAnnouncementRepository,
+  DailyChampionRepository,
+  Player,
+  PlayerRepository,
+} from "@/application/ports";
 import type { BattleResult, GameDate } from "@/domain";
 import type { Database } from "./client";
-import { battles, dailyChampions, players } from "./schema";
+import { battles, dailyAnnouncements, dailyChampions, players } from "./schema";
 
 type BattleRow = typeof battles.$inferSelect;
 
@@ -70,6 +78,14 @@ export class DrizzleBattleRepository implements BattleRepository {
     });
     return rows.map(toRecord);
   }
+
+  async listDailyHistoryByGuild(guildId: string): Promise<{ date: GameDate; won: boolean }[]> {
+    const rows = await this.db
+      .select({ date: battles.date, status: battles.status })
+      .from(battles)
+      .where(and(eq(battles.guildId, guildId), eq(battles.mode, "daily"), isNotNull(battles.result)));
+    return rows.map((r) => ({ date: r.date, won: r.status === "won" }));
+  }
 }
 
 export class DrizzlePlayerRepository implements PlayerRepository {
@@ -115,5 +131,24 @@ export class DrizzleDailyChampionRepository implements DailyChampionRepository {
     // First writer wins; a concurrent request that loses just reads the stored choice.
     await this.db.insert(dailyChampions).values({ date, championId, createdAt: new Date() }).onConflictDoNothing();
     return (await this.get(date))!;
+  }
+}
+
+export class DrizzleDailyAnnouncementRepository implements DailyAnnouncementRepository {
+  constructor(private readonly db: Database) {}
+
+  async get(guildId: string, date: GameDate): Promise<DailyAnnouncement | null> {
+    const row = await this.db.query.dailyAnnouncements.findFirst({
+      where: and(eq(dailyAnnouncements.guildId, guildId), eq(dailyAnnouncements.date, date)),
+    });
+    return row ? { channelId: row.channelId, messageId: row.messageId } : null;
+  }
+
+  async save(guildId: string, date: GameDate, announcement: DailyAnnouncement): Promise<void> {
+    const values = { guildId, date, ...announcement, updatedAt: new Date() };
+    await this.db
+      .insert(dailyAnnouncements)
+      .values(values)
+      .onConflictDoUpdate({ target: [dailyAnnouncements.guildId, dailyAnnouncements.date], set: values });
   }
 }

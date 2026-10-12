@@ -1,4 +1,4 @@
-import { Battle, Dex, type Pokemon } from "pokemon-showdown";
+import { Battle, type Pokemon } from "pokemon-showdown";
 import type { BattleEngine, BattleSetup, BattleSnapshot } from "@/application/ports";
 import { InvalidActionError } from "@/application/errors";
 import {
@@ -14,9 +14,10 @@ import { createRandom, hashSeed } from "@/domain/rules/random";
 import { slotFromNickname, slotNickname, translateLog, toPercent, type LogContext } from "./logParser";
 import { chooseRedAction } from "./redAI";
 import { isForcedSwitch, moveOptions } from "./requests";
+import { dex, GEN } from "./generation";
 import { toShowdownSet } from "./teams";
 
-const FORMAT = "gen3customgame";
+const FORMAT = `gen${GEN}customgame`;
 const PLAYER_NAME = "Jogador";
 /** Safety net against stalemates (e.g. both sides only able to heal). */
 const MAX_TURNS = 300;
@@ -65,6 +66,7 @@ export class ShowdownBattleEngine implements BattleEngine {
     const logContext: LogContext = {
       roster: { player: team.map((s) => s.species), red: champion.team.map((s) => s.species) },
       championName: champion.name,
+      championOf: `${champion.feminine ? "da" : "do"} ${champion.name}`,
       playerName: PLAYER_NAME,
     };
 
@@ -141,7 +143,7 @@ export class ShowdownBattleEngine implements BattleEngine {
         boosts: boostsOf(p),
         moves: p.moveSlots.map((moveSlot) => ({
           name: moveSlot.move,
-          type: Dex.forGen(3).moves.get(moveSlot.id).type,
+          type: dex.moves.get(moveSlot.id).type,
           pp: moveSlot.pp,
           maxPp: moveSlot.maxpp,
         })),
@@ -154,7 +156,7 @@ export class ShowdownBattleEngine implements BattleEngine {
       return {
         index,
         name: option.move,
-        type: Dex.forGen(3).moves.get(option.id).type,
+        type: dex.moves.get(option.id).type,
         pp: moveSlot?.pp ?? 0,
         maxPp: moveSlot?.maxpp ?? 0,
         disabled: Boolean(option.disabled),

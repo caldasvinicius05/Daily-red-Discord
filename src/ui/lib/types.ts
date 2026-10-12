@@ -1,4 +1,4 @@
-/** Gen 2–5 types (no Fairy in Gen 3). Colors follow the palette fans commonly use for each type. */
+/** Gen 2–5 types (no Fairy before Gen 6). Colors follow the palette fans commonly use for each type. */
 export const TYPE_COLORS: Record<string, string> = {
   Normal: "#A8A77A",
   Fire: "#EE8130",

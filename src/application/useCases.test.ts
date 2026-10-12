@@ -3,6 +3,7 @@ import { CHAMPIONS, type BattleView, type PlayerAction } from "@/domain";
 import { createRandom } from "@/domain/rules/random";
 import {
   MemoryBattleRepository,
+  MemoryDailyAnnouncementRepository,
   MemoryDailyChampionRepository,
   MemoryPlayerRepository,
 } from "@/infrastructure/memory/memoryRepositories";
@@ -19,7 +20,7 @@ import {
   UnauthorizedError,
 } from "./errors";
 import { createUseCases, type BattleState, type UseCases } from "./useCases";
-import type { BattleRepository, DiscordGateway } from "./ports";
+import type { BattleRepository, DailyAnnouncer, DiscordGateway, ServerSummary } from "./ports";
 
 const ALICE = { id: "alice", username: "alice", displayName: "Alice", avatar: null };
 const BOB = { id: "bob", username: "bob", displayName: "Bob", avatar: null };
@@ -44,11 +45,22 @@ const teams = new ShowdownTeamFactory();
 let now: Date;
 let battles: BattleRepository;
 let app: UseCases;
+/** What the fake bot was asked to post or edit, in order. */
+let published: { summary: ServerSummary; channelId: string; messageId: string | null }[];
+
+/** Fake bot: posts message "msg-N" the first time, then edits it. */
+const fakeAnnouncer: DailyAnnouncer = {
+  publish: async (summary, target) => {
+    published.push({ summary, ...target });
+    return { channelId: target.channelId, messageId: target.messageId ?? `msg-${published.length}` };
+  },
+};
 
 beforeEach(async () => {
   now = at("2026-10-12");
   let n = 0;
   battles = new MemoryBattleRepository();
+  published = [];
   app = createUseCases({
     engine: new ShowdownBattleEngine(),
     teams,
@@ -56,6 +68,8 @@ beforeEach(async () => {
     dailyChampions: new MemoryDailyChampionRepository(),
     players: new MemoryPlayerRepository(),
     discord: fakeDiscord,
+    announcements: new MemoryDailyAnnouncementRepository(),
+    announcer: fakeAnnouncer,
     pokedex: new ShowdownPokedex(),
     clock: { now: () => now },
     ids: { next: () => `battle-${++n}` },
@@ -268,17 +282,20 @@ describe("daily statuses", () => {
 });
 
 describe("reference data", () => {
-  it("describes every species and move that can appear, with Gen 3 categories", () => {
+  it("describes every species and move that can appear, with Gen 4 categories", () => {
     const ref = app.getReferenceData();
     // The whole player pool plus the champions' Pokémon (Pikachu only comes with Red).
-    expect(Object.keys(ref.species).length).toBeGreaterThan(190);
+    expect(Object.keys(ref.species).length).toBeGreaterThan(225);
+    expect(ref.species["Garchomp"]).toMatchObject({ num: 445, types: ["Dragon", "Ground"] });
     expect(ref.species["Pikachu"]).toMatchObject({ num: 25, types: ["Electric"] });
     expect(ref.species["Raichu"]).toBeDefined();
     expect(ref.moves["Hidden Power Fire"]).toBeDefined();
     expect(ref.species["Metagross"]!.baseStats.atk).toBe(135);
-    // Crunch is Dark → special in Gen 3; Shadow Ball is Ghost → physical.
-    expect(ref.moves["Crunch"]!.category).toBe("Special");
-    expect(ref.moves["Shadow Ball"]!.category).toBe("Physical");
+    // From Gen 4 each move has its own category, whatever its type.
+    expect(ref.moves["Crunch"]!.category).toBe("Physical");
+    expect(ref.moves["Shadow Ball"]!.category).toBe("Special");
+    expect(ref.moves["Close Combat"]).toBeDefined();
+    expect(ref.items["Life Orb"]).toBeTruthy();
     expect(ref.moves["Quick Attack"]!.priority).toBe(1);
     expect(ref.items["Leftovers"]).toBeTruthy();
   });
@@ -298,5 +315,83 @@ describe("leaderboard", () => {
       [2, "Bob"], // abandoned games rank last
     ]);
     expect((await app.getLeaderboard({ guildId: "other-guild" })).entries).toEqual([]);
+  });
+});
+
+describe("practice champion choice", () => {
+  it("faces the champion the player picked", async () => {
+    for (const id of ["cynthia", "lance"]) {
+      const battle = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "practice", leadIndex: 0, championId: id });
+      expect(battle.champion.id).toBe(id);
+    }
+  });
+
+  it("rejects unknown champions and lists everyone on the home screen", async () => {
+    await expect(
+      app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "practice", leadIndex: 0, championId: "gary" }),
+    ).rejects.toThrow(InvalidActionError);
+    expect((await app.getToday(ALICE.id)).champions.map((c) => c.id)).toEqual(CHAMPIONS.map((c) => c.id));
+  });
+});
+
+describe("daily results message", () => {
+  it("is posted in the channel when the first daily ends, then edited as others finish", async () => {
+    const a = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "daily", leadIndex: 0, channelId: "chan-1" });
+    await playToEnd(ALICE.id, a);
+    expect(published).toHaveLength(1);
+    expect(published[0]).toMatchObject({ channelId: "chan-1", messageId: null });
+    expect(published[0]!.summary).toMatchObject({ guildId: GUILD, date: "2026-10-12", streak: 1 });
+    expect(published[0]!.summary.entries.map((e) => e.player.id)).toEqual([ALICE.id]);
+
+    // Bob plays from another channel: the same message is edited, where it was posted.
+    const b = await app.startBattle({ playerId: BOB.id, guildId: GUILD, mode: "daily", leadIndex: 1, channelId: "chan-2" });
+    await app.forfeitBattle({ playerId: BOB.id, battleId: b.id });
+    expect(published).toHaveLength(2);
+    expect(published[1]).toMatchObject({ channelId: "chan-1", messageId: "msg-1" });
+    expect(published[1]!.summary.entries).toHaveLength(2);
+  });
+
+  it("is not posted for practice, outside a server or without a channel", async () => {
+    const practice = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "practice", leadIndex: 0, channelId: "chan-1" });
+    await app.forfeitBattle({ playerId: ALICE.id, battleId: practice.id });
+    const daily = await app.startBattle({ playerId: BOB.id, guildId: GUILD, mode: "daily", leadIndex: 0 });
+    await app.forfeitBattle({ playerId: BOB.id, battleId: daily.id });
+    expect(published).toEqual([]);
+  });
+
+  it("never breaks the battle when Discord fails", async () => {
+    const failing = createUseCases({
+      engine: new ShowdownBattleEngine(),
+      teams,
+      battles: new MemoryBattleRepository(),
+      dailyChampions: new MemoryDailyChampionRepository(),
+      players: new MemoryPlayerRepository(),
+      discord: fakeDiscord,
+      announcements: new MemoryDailyAnnouncementRepository(),
+      announcer: { publish: () => Promise.reject(new Error("Discord fora do ar")) },
+      pokedex: new ShowdownPokedex(),
+      clock: { now: () => now },
+      ids: { next: () => "only" },
+      random: createRandom("failing"),
+    });
+    await failing.registerPlayer(ALICE);
+    const battle = await failing.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "daily", leadIndex: 0, channelId: "c" });
+    const ended = await failing.forfeitBattle({ playerId: ALICE.id, battleId: battle.id });
+    expect(ended.result?.abandoned).toBe(true);
+  });
+});
+
+describe("server summary", () => {
+  it("counts the streak of days played and every champion defeated", async () => {
+    for (const day of ["2026-10-10", "2026-10-11", "2026-10-12"]) {
+      now = at(day);
+      const battle = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "daily", leadIndex: 0 });
+      await app.forfeitBattle({ playerId: ALICE.id, battleId: battle.id });
+    }
+    const summary = await app.getServerSummary({ guildId: GUILD });
+    expect(summary.streak).toBe(3);
+    expect(summary.championsDefeated).toBe(0);
+    expect(summary.entries).toHaveLength(1);
+    expect((await app.getServerSummary({ guildId: "other" })).streak).toBe(0);
   });
 });

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import type { BattleStatus } from "@/application/ports";
 import type { BattleMode, BattleResult, PlayerAction, Team } from "@/domain";
 
@@ -20,6 +20,7 @@ export const battles = sqliteTable(
       .notNull()
       .references(() => players.id),
     guildId: text("guild_id"),
+    channelId: text("channel_id"),
     mode: text("mode").$type<BattleMode>().notNull(),
     date: text("date").notNull(),
     /** Battles from before champions existed were all against Red. */
@@ -48,3 +49,16 @@ export const dailyChampions = sqliteTable("daily_champions", {
   championId: text("champion_id").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 });
+
+/** The results message each server got for each day, edited as more players finish. */
+export const dailyAnnouncements = sqliteTable(
+  "daily_announcements",
+  {
+    guildId: text("guild_id").notNull(),
+    date: text("date").notNull(),
+    channelId: text("channel_id").notNull(),
+    messageId: text("message_id").notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.guildId, t.date] })],
+);

@@ -4,7 +4,7 @@ import type { Champion, PokemonSet } from "../entities";
  * Bump when champions' sets or the player pool rules change: it is mixed into battle
  * seeds, so old saved battles stay tied to the data they were played with.
  */
-export const DATA_VERSION = 2;
+export const DATA_VERSION = 3;
 
 const physical = { hp: 4, atk: 252, spe: 252 };
 const special = { hp: 4, spa: 252, spe: 252 };
@@ -57,9 +57,19 @@ const wallaceWhiscash = set({ species: "Whiscash", item: "Leftovers", ability: "
 const wallaceGyarados = set({ species: "Gyarados", item: "Leftovers", ability: "Intimidate", nature: "Jolly", evs: physical, moves: ["Dragon Dance", "Return", "Earthquake", "Taunt"] });
 const wallaceMilotic = set({ species: "Milotic", item: "Leftovers", ability: "Marvel Scale", nature: "Bold", evs: wall, moves: ["Surf", "Ice Beam", "Recover", "Toxic"] });
 
+// ---------- Sinnoh (Cynthia) ----------
+
+const cynthiaSpiritomb = set({ species: "Spiritomb", item: "Leftovers", ability: "Pressure", nature: "Careful", evs: wall, moves: ["Will-O-Wisp", "Shadow Sneak", "Sucker Punch", "Pain Split"] });
+const cynthiaRoserade = set({ species: "Roserade", item: "Life Orb", ability: "Natural Cure", nature: "Timid", evs: special, moves: ["Leaf Storm", "Sludge Bomb", "Shadow Ball", "Sleep Powder"] });
+const cynthiaTogekiss = set({ species: "Togekiss", item: "Leftovers", ability: "Serene Grace", nature: "Timid", evs: { hp: 252, spa: 4, spe: 252 }, moves: ["Air Slash", "Aura Sphere", "Thunder Wave", "Roost"] });
+const cynthiaLucario = set({ species: "Lucario", item: "Life Orb", ability: "Inner Focus", nature: "Adamant", evs: physical, moves: ["Swords Dance", "Close Combat", "Extreme Speed", "Stone Edge"] });
+const cynthiaMilotic = set({ species: "Milotic", item: "Leftovers", ability: "Marvel Scale", nature: "Bold", evs: wall, moves: ["Surf", "Ice Beam", "Recover", "Haze"] });
+const cynthiaGarchomp = set({ species: "Garchomp", item: "Yache Berry", ability: "Sand Veil", nature: "Jolly", evs: physical, moves: ["Swords Dance", "Earthquake", "Dragon Claw", "Fire Fang"] });
+
 /**
- * The opponents. Rosters follow the games' final battles; sets are standard Gen 3
- * competitive builds, validated against Showdown's rules in the tests.
+ * The opponents. Rosters follow the games' final battles; sets are standard competitive
+ * builds (Gen 3 for the older champions, Gen 4 for Cynthia), validated against Showdown's
+ * Gen 4 rules in the tests.
  */
 export const CHAMPIONS: readonly Champion[] = [
   {
@@ -97,6 +107,14 @@ export const CHAMPIONS: readonly Champion[] = [
     location: "Liga Pokémon de Hoenn",
     team: [wallaceWailord, wallaceTentacruel, wallaceLudicolo, wallaceWhiscash, wallaceGyarados, wallaceMilotic],
   },
+  {
+    id: "cynthia",
+    name: "Cynthia",
+    feminine: true,
+    title: "Campeã de Sinnoh",
+    location: "Liga Pokémon de Sinnoh",
+    team: [cynthiaSpiritomb, cynthiaRoserade, cynthiaTogekiss, cynthiaLucario, cynthiaMilotic, cynthiaGarchomp],
+  },
 ];
 
 /** Retired ids still found in saved battles and daily picks: Blue used to have three teams. */
@@ -115,6 +133,7 @@ export function summarizeChampion(champion: Champion): {
   variant: string | null;
   title: string;
   location: string;
+  feminine: boolean;
   team: string[];
 } {
   return {
@@ -123,6 +142,7 @@ export function summarizeChampion(champion: Champion): {
     variant: champion.variant ?? null,
     title: champion.title,
     location: champion.location,
+    feminine: champion.feminine ?? false,
     team: champion.team.map((s) => s.species),
   };
 }

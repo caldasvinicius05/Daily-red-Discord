@@ -2,7 +2,7 @@
 
 # Daily Battle — guia para agentes
 
-Atividade do Discord: uma batalha Pokémon diária contra um campeão (Gen 1–3, sem repetir na semana), para um servidor privado de amigos. Visão geral, setup e deploy estão no [README.md](README.md).
+Atividade do Discord: uma batalha Pokémon diária contra um campeão (Gen 1–4, todos aparecem antes de repetir na semana), para um servidor privado de amigos. Visão geral, setup e deploy estão no [README.md](README.md).
 
 ## Idioma
 
@@ -19,6 +19,10 @@ Atividade do Discord: uma batalha Pokémon diária contra um campeão (Gen 1–3
 - `src/ui` — React. O cliente importa do servidor apenas **tipos** (`import type`), nunca código de infraestrutura.
 
 Pokémon na batalha são identificados pela **posição no time** (`slot`, apelido `m0`…`m5` no Showdown), nunca pela espécie — campeões podem repetir espécies (três Dragonite do Lance). No código, o lado do campeão ainda se chama `red` (e o resultado `redFainted`), por compatibilidade.
+
+Regras da **Gen 4**: a geração fica em `src/infrastructure/showdown/generation.ts` (`GEN`, `dex`); nada de `Dex.forGen(n)` espalhado. Pokémon sem sprite em `public/sprites/` caem no emblema por tipo (`PokemonEmblem`), então espécies novas funcionam antes dos sprites.
+
+Quando uma diária termina, `announceDaily` publica/edita a mensagem do dia no canal (port `DailyAnnouncer`, bot com `BOT_TOKEN`); falhas do Discord nunca quebram a batalha.
 
 Batalhas são **sem estado em memória**: guardar seed + ações e refazer no Showdown a cada requisição (`ShowdownBattleEngine.simulate`). A diária usa a mesma seed para todos.
 

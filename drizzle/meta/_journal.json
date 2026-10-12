@@ -15,6 +15,13 @@
       "when": 1791842209998,
       "tag": "0001_champions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791847485853,
+      "tag": "0002_announcements",
+      "breakpoints": true
     }
   ]
 }

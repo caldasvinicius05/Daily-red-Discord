@@ -5,6 +5,7 @@ import type {
   LeaderboardDTO,
   PlayerDTO,
   ReferenceDTO,
+  ServerSummaryDTO,
   SessionDTO,
   StatusesDTO,
   TodayDTO,
@@ -63,7 +64,9 @@ export const api = {
   today: () => request<TodayDTO>("GET", "/today"),
   leaderboard: (date?: string) => request<LeaderboardDTO>("GET", `/leaderboard${date ? `?date=${date}` : ""}`),
   statuses: (playerIds: string[]) => request<StatusesDTO>("POST", "/today/statuses", { playerIds }),
-  startBattle: (mode: BattleMode, leadIndex: number) => request<BattleDTO>("POST", "/battles", { mode, leadIndex }),
+  startBattle: (input: { mode: BattleMode; leadIndex: number; championId: string | null; channelId: string | null }) =>
+    request<BattleDTO>("POST", "/battles", input),
+  serverSummary: () => request<ServerSummaryDTO | null>("GET", "/server-summary"),
   getBattle: (id: string) => request<BattleDTO>("GET", `/battles/${encodeURIComponent(id)}`),
   act: (id: string, action: PlayerAction) =>
     request<BattleDTO>("POST", `/battles/${encodeURIComponent(id)}/actions`, { action }),

@@ -1,4 +1,4 @@
-import type { Player } from "@/application/ports";
+import type { Player, ServerSummary } from "@/application/ports";
 import type { BattleState, DailyStatus, LeaderboardEntry, ReferenceData, TodayOverview } from "@/application/useCases";
 
 /** What a server type looks like after JSON serialisation (Dates become strings). */
@@ -11,6 +11,7 @@ export type LeaderboardEntryDTO = Jsonify<LeaderboardEntry>;
 export type LeaderboardDTO = { date: string; entries: LeaderboardEntryDTO[] };
 export type StatusesDTO = { date: string; statuses: Jsonify<DailyStatus>[] };
 export type ReferenceDTO = ReferenceData;
+export type ServerSummaryDTO = Jsonify<ServerSummary>;
 export type PlayerDTO = Player;
 
 export interface SessionDTO {

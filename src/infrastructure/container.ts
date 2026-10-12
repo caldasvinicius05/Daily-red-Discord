@@ -1,8 +1,15 @@
 import { createUseCases, type UseCases } from "@/application/useCases";
 import { config, discordConfigured } from "./config";
 import { createDatabase, prepareDatabase } from "./db/client";
-import { DrizzleBattleRepository, DrizzleDailyChampionRepository, DrizzlePlayerRepository } from "./db/drizzleRepositories";
+import {
+  DrizzleBattleRepository,
+  DrizzleDailyAnnouncementRepository,
+  DrizzleDailyChampionRepository,
+  DrizzlePlayerRepository,
+} from "./db/drizzleRepositories";
+import { DiscordBotAnnouncer, silentAnnouncer } from "./discord/discordAnnouncer";
 import { HttpDiscordGateway, unavailableDiscordGateway } from "./discord/discordGateway";
+import { resultsCardUrl } from "./discord/resultsCard";
 import { ShowdownBattleEngine } from "./showdown/ShowdownBattleEngine";
 import { ShowdownPokedex } from "./showdown/ShowdownPokedex";
 import { ShowdownTeamFactory } from "./showdown/ShowdownTeamFactory";
@@ -26,6 +33,12 @@ async function build(): Promise<UseCases> {
     discord: discordConfigured()
       ? new HttpDiscordGateway(config.discordClientId, config.discordClientSecret)
       : unavailableDiscordGateway,
+    announcements: new DrizzleDailyAnnouncementRepository(db),
+    announcer: config.discordBotToken
+      ? new DiscordBotAnnouncer(config.discordBotToken, (summary) =>
+          config.publicUrl ? resultsCardUrl(config.publicUrl, summary, config.sessionSecret) : null,
+        )
+      : silentAnnouncer,
     pokedex: new ShowdownPokedex(),
     clock: systemClock,
     ids: uuidGenerator,

@@ -9,6 +9,7 @@ import {
   msUntilNextDay,
   pickChampion,
   rankResults,
+  serverStreak,
   summarizeChampion,
   toGameDate,
   weekStart,
@@ -35,17 +36,23 @@ import type {
   BattleRepository,
   BattleSnapshot,
   Clock,
+  DailyAnnouncementRepository,
+  DailyAnnouncer,
   DailyChampionRepository,
   DiscordGateway,
   IdGenerator,
+  LeaderboardEntry,
   MoveInfo,
   Player,
   PlayerRepository,
   Pokedex,
   RandomSource,
+  ServerSummary,
   SpeciesInfo,
   TeamFactory,
 } from "./ports";
+
+export type { LeaderboardEntry, ServerSummary } from "./ports";
 
 export interface Deps {
   engine: BattleEngine;
@@ -54,6 +61,8 @@ export interface Deps {
   dailyChampions: DailyChampionRepository;
   players: PlayerRepository;
   discord: DiscordGateway;
+  announcements: DailyAnnouncementRepository;
+  announcer: DailyAnnouncer;
   pokedex: Pokedex;
   clock: Clock;
   ids: IdGenerator;
@@ -78,21 +87,16 @@ export interface BattleState {
 
 export interface TodayOverview {
   challenge: DailyChallenge;
-  /** Today's daily opponent. Practice battles draw a random one instead. */
+  /** Today's daily opponent. */
   champion: ChampionSummary;
+  /** Everyone that can be faced in practice. */
+  champions: ChampionSummary[];
   msUntilNext: number;
   daily:
     | { status: "available" }
     | { status: "active"; battleId: string }
     | { status: "finished"; battleId: string; result: BattleResult; shareText: string };
   stats: PlayerStats;
-}
-
-export interface LeaderboardEntry {
-  rank: number;
-  player: Pick<Player, "id" | "displayName" | "avatar">;
-  result: BattleResult;
-  finishedAt: Date;
 }
 
 /** Where a player stands on today's daily: not started, playing, or done (with the result). */
@@ -121,6 +125,12 @@ const MAX_ACTIONS = 500;
 function dailySeed(date: GameDate, championId: string): string {
   // Same seed for everyone: identical choices lead to identical luck.
   return `${date}:daily:${championId}:v${DATA_VERSION}`;
+}
+
+function practiceChampion(deps: Deps, requested: string | null | undefined): string {
+  if (!requested) return CHAMPIONS[Math.floor(deps.random() * CHAMPIONS.length)]!.id;
+  if (!CHAMPIONS.some((c) => c.id === requested)) throw new InvalidActionError("Campeão desconhecido");
+  return requested;
 }
 
 /**
@@ -226,6 +236,7 @@ export async function getToday(deps: Deps, playerId: string): Promise<TodayOverv
   return {
     challenge: dailyChallenge(deps, date),
     champion: summarizeChampion(getChampion(championId)),
+    champions: CHAMPIONS.map(summarizeChampion),
     msUntilNext: msUntilNextDay(now),
     daily,
     stats,
@@ -234,7 +245,16 @@ export async function getToday(deps: Deps, playerId: string): Promise<TodayOverv
 
 export async function startBattle(
   deps: Deps,
-  input: { playerId: string; guildId: string | null; mode: BattleMode; leadIndex: number },
+  input: {
+    playerId: string;
+    guildId: string | null;
+    mode: BattleMode;
+    leadIndex: number;
+    /** Practice only: who to face. Omitted → drawn at random. */
+    championId?: string | null;
+    /** Discord channel the Activity runs in (null outside Discord). */
+    channelId?: string | null;
+  },
 ): Promise<BattleState> {
   const now = deps.clock.now();
   const date = toGameDate(now);
@@ -247,14 +267,14 @@ export async function startBattle(
   }
 
   const id = deps.ids.next();
-  // Daily: the day's champion. Practice: any champion, at random, to get used to them all.
-  const championId =
-    input.mode === "daily" ? await championOfDay(deps, date) : CHAMPIONS[Math.floor(deps.random() * CHAMPIONS.length)]!.id;
+  // Daily: the day's champion. Practice: the one the player picked, or any at random.
+  const championId = input.mode === "daily" ? await championOfDay(deps, date) : practiceChampion(deps, input.championId);
 
   const record: BattleRecord = {
     id,
     playerId: input.playerId,
     guildId: input.guildId,
+    channelId: input.channelId ?? null,
     mode: input.mode,
     date,
     championId,
@@ -301,6 +321,7 @@ export async function submitAction(
     updated.finishedAt = deps.clock.now();
   }
   await deps.battles.update(updated, previousCount);
+  if (updated.result) await announceDaily(deps, updated);
   return toState(deps, updated, snapshot, snapshot.steps.at(-1) ?? []);
 }
 
@@ -325,12 +346,13 @@ export async function forfeitBattle(deps: Deps, input: { playerId: string; battl
     finishedAt: deps.clock.now(),
   };
   await deps.battles.update(updated, record.actions.length);
+  await announceDaily(deps, updated);
   return toState(deps, updated, snapshot, []);
 }
 
 /**
  * Static Pokédex data: every species that can appear (player pool + champions) and
- * every Gen 3 move, item and ability, since daily builds are generated.
+ * every move, item and ability of the generation, since daily builds are generated.
  */
 export function getReferenceData(deps: Deps): ReferenceData {
   const data: ReferenceData = { species: {}, moves: {}, items: {}, abilities: {} };
@@ -392,6 +414,46 @@ export async function getLeaderboard(
   return { date, champion: summarizeChampion(getChampion(championId)), entries };
 }
 
+/** A server's day at a glance: streak, all-time wins and today's ranking. */
+export async function getServerSummary(deps: Deps, input: { guildId: string; date?: GameDate }): Promise<ServerSummary> {
+  const [{ date, champion, entries }, history] = await Promise.all([
+    getLeaderboard(deps, input),
+    deps.battles.listDailyHistoryByGuild(input.guildId),
+  ]);
+  return {
+    guildId: input.guildId,
+    date,
+    challengeNumber: challengeNumber(date),
+    champion,
+    streak: serverStreak(
+      history.map((h) => h.date),
+      date,
+    ),
+    championsDefeated: history.filter((h) => h.won).length,
+    entries,
+  };
+}
+
+/**
+ * After a daily ends: posts the server's results in the Activity's channel, or edits
+ * the message already posted today. Best effort — the battle result never depends on it.
+ */
+async function announceDaily(deps: Deps, record: BattleRecord): Promise<void> {
+  if (record.mode !== "daily" || !record.guildId) return;
+  try {
+    const existing = await deps.announcements.get(record.guildId, record.date);
+    const channelId = existing?.channelId ?? record.channelId;
+    if (!channelId) return;
+    const summary = await getServerSummary(deps, { guildId: record.guildId, date: record.date });
+    const posted = await deps.announcer.publish(summary, { channelId, messageId: existing?.messageId ?? null });
+    if (posted && (posted.messageId !== existing?.messageId || posted.channelId !== existing?.channelId)) {
+      await deps.announcements.save(record.guildId, record.date, posted);
+    }
+  } catch (error) {
+    console.warn("Não foi possível publicar o resultado do dia no Discord", error);
+  }
+}
+
 /** Binds every use case to its dependencies; the presentation layer only sees this. */
 export function createUseCases(deps: Deps) {
   return {
@@ -407,6 +469,7 @@ export function createUseCases(deps: Deps) {
     getPlayerStats: (playerId: string) => getPlayerStats(deps, playerId),
     getLeaderboard: (input: Parameters<typeof getLeaderboard>[1]) => getLeaderboard(deps, input),
     getDailyStatuses: (playerIds: readonly string[]) => getDailyStatuses(deps, playerIds),
+    getServerSummary: (input: Parameters<typeof getServerSummary>[1]) => getServerSummary(deps, input),
   };
 }
 

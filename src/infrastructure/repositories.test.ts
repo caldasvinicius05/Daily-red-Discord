@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { ConflictError } from "@/application/errors";
-import type { BattleRecord, BattleRepository, DailyChampionRepository, PlayerRepository } from "@/application/ports";
+import type { BattleRecord, BattleRepository, DailyAnnouncementRepository, DailyChampionRepository, PlayerRepository } from "@/application/ports";
 import { getChampion } from "@/domain";
 import { createDatabase, migrateDatabase } from "./db/client";
-import { DrizzleBattleRepository, DrizzleDailyChampionRepository, DrizzlePlayerRepository } from "./db/drizzleRepositories";
-import { MemoryBattleRepository, MemoryDailyChampionRepository, MemoryPlayerRepository } from "./memory/memoryRepositories";
+import { DrizzleBattleRepository, DrizzleDailyAnnouncementRepository, DrizzleDailyChampionRepository, DrizzlePlayerRepository } from "./db/drizzleRepositories";
+import { MemoryBattleRepository, MemoryDailyAnnouncementRepository, MemoryDailyChampionRepository, MemoryPlayerRepository } from "./memory/memoryRepositories";
 
 /** The same contract must hold for every adapter, so the app behaves the same in tests and in production. */
-type Repos = { battles: BattleRepository; players: PlayerRepository; dailyChampions: DailyChampionRepository };
+type Repos = {
+  battles: BattleRepository;
+  players: PlayerRepository;
+  dailyChampions: DailyChampionRepository;
+  announcements: DailyAnnouncementRepository;
+};
 
 const adapters: [string, () => Promise<Repos>][] = [
   [
@@ -16,6 +21,7 @@ const adapters: [string, () => Promise<Repos>][] = [
       battles: new MemoryBattleRepository(),
       players: new MemoryPlayerRepository(),
       dailyChampions: new MemoryDailyChampionRepository(),
+      announcements: new MemoryDailyAnnouncementRepository(),
     }),
   ],
   [
@@ -27,6 +33,7 @@ const adapters: [string, () => Promise<Repos>][] = [
         battles: new DrizzleBattleRepository(db),
         players: new DrizzlePlayerRepository(db),
         dailyChampions: new DrizzleDailyChampionRepository(db),
+        announcements: new DrizzleDailyAnnouncementRepository(db),
       };
     },
   ],
@@ -36,6 +43,7 @@ const record = (overrides: Partial<BattleRecord> = {}): BattleRecord => ({
   id: "b1",
   playerId: "alice",
   guildId: "g1",
+  channelId: "c1",
   mode: "daily",
   date: "2026-10-12",
   championId: "lance",
@@ -106,6 +114,18 @@ describe.each(adapters)("%s repositories", (_name, make) => {
     expect(await battles.listDailyResults("bob")).toEqual([{ ...result, date: "2026-10-11" }]);
     expect((await battles.listFinishedDailyByGuild("g1", "2026-10-12")).map((r) => r.id)).toEqual(["a"]);
     expect(await battles.listFinishedDailyByGuild("g2", "2026-10-12")).toEqual([]);
+    expect(await battles.listDailyHistoryByGuild("g1")).toEqual([{ date: "2026-10-12", won: true }]);
+    expect(await battles.listDailyHistoryByGuild("g2")).toEqual([{ date: "2026-10-11", won: true }]);
+    expect(await battles.listDailyHistoryByGuild("g3")).toEqual([]);
+  });
+
+  it("remembers the results message of each server and day, and moves it when told", async () => {
+    const { announcements } = await setup();
+    expect(await announcements.get("g1", "2026-10-12")).toBeNull();
+    await announcements.save("g1", "2026-10-12", { channelId: "c1", messageId: "m1" });
+    await announcements.save("g1", "2026-10-12", { channelId: "c2", messageId: "m2" });
+    expect(await announcements.get("g1", "2026-10-12")).toEqual({ channelId: "c2", messageId: "m2" });
+    expect(await announcements.get("g1", "2026-10-13")).toBeNull();
   });
 
   it("stores one champion per day; the first claim wins", async () => {

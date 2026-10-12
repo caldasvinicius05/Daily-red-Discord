@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { PokemonSet } from "../entities";
 import { CHAMPIONS, getChampion, summarizeChampion } from "./champions";
 
-const validator = TeamValidator.get("gen3ubers");
+const validator = TeamValidator.get("gen4ubers");
 
 function toShowdownSet(set: PokemonSet) {
   return {
@@ -25,15 +25,19 @@ describe.each(CHAMPIONS.map((c) => [c.id, c] as const))("%s", (_id, champion) =>
     expect(champion.team).toHaveLength(6);
   });
 
-  it.each(champion.team.map((s, i) => [`${i + 1}. ${s.species}`, s] as const))("%s is a legal Gen 3 set", (_name, set) => {
+  it.each(champion.team.map((s, i) => [`${i + 1}. ${s.species}`, s] as const))("%s is a legal Gen 4 set", (_name, set) => {
     expect(validator.validateTeam([toShowdownSet(set)]) ?? []).toEqual([]);
   });
 });
 
 describe("champions", () => {
-  it("are five, with unique ids", () => {
-    expect(CHAMPIONS).toHaveLength(5);
-    expect(new Set(CHAMPIONS.map((c) => c.id)).size).toBe(5);
+  it("are six, with unique ids", () => {
+    expect(CHAMPIONS).toHaveLength(6);
+    expect(new Set(CHAMPIONS.map((c) => c.id)).size).toBe(6);
+  });
+
+  it("include Cynthia's Platinum team", () => {
+    expect(summarizeChampion(getChampion("cynthia")).team).toEqual(["Spiritomb", "Roserade", "Togekiss", "Lucario", "Milotic", "Garchomp"]);
   });
 
   it("give Blue his HeartGold/SoulSilver Viridian Gym team", () => {
@@ -55,6 +59,7 @@ describe("champions", () => {
       variant: null,
       title: "Lenda do Monte Prateado",
       location: "Monte Prateado",
+      feminine: false,
       team: ["Pikachu", "Espeon", "Snorlax", "Venusaur", "Charizard", "Blastoise"],
     });
     expect(() => getChampion("nobody")).toThrow();

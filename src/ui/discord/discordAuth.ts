@@ -16,6 +16,11 @@ export function getDiscordSdk(): DiscordSDK | null {
   return sdk;
 }
 
+/** Channel the Activity was opened in (where the day's results get posted); null outside Discord. */
+export function getDiscordChannelId(): string | null {
+  return sdk?.channelId ?? null;
+}
+
 /**
  * Opens Discord's own share dialog with the result text (plus a link to the Activity).
  * The player picks the channel or DM; nothing is posted without them confirming.

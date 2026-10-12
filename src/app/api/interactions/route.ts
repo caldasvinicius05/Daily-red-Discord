@@ -2,13 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { config } from "@/infrastructure/config";
 import { getUseCases } from "@/infrastructure/container";
 import { verifyDiscordRequest } from "@/infrastructure/discord/verifyInteraction";
-import { leaderboardMessage } from "../_lib/discordMessages";
+import { LAUNCH_BUTTON_ID, leaderboardMessage } from "@/infrastructure/discord/messages";
 
 export const dynamic = "force-dynamic";
 
 // Discord interaction / response types we use.
 const PING = 1;
 const APPLICATION_COMMAND = 2;
+const MESSAGE_COMPONENT = 3;
 const PONG = 1;
 const CHANNEL_MESSAGE = 4;
 const LAUNCH_ACTIVITY = 12;
@@ -18,13 +19,14 @@ const EPHEMERAL = 1 << 6;
 interface Interaction {
   type: number;
   guild_id?: string;
-  data?: { name?: string; type?: number };
+  data?: { name?: string; type?: number; custom_id?: string };
 }
 
 /**
  * Interactions endpoint (set as "Interactions Endpoint URL" in the Developer Portal).
  * Handles the `/dailybattle` slash command (and the old `/dailyred` name, until it is
- * removed from Discord). Signature-checked with PUBLIC_KEY.
+ * removed from Discord) and the "Jogar agora!" button of the daily results message.
+ * Signature-checked with PUBLIC_KEY.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // The signature covers the exact raw body, so read it as text before parsing.
@@ -39,6 +41,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const interaction = JSON.parse(raw) as Interaction;
   if (interaction.type === PING) return NextResponse.json({ type: PONG });
+
+  // "Jogar agora!" under the daily results message: open the Activity.
+  if (interaction.type === MESSAGE_COMPONENT && interaction.data?.custom_id === LAUNCH_BUTTON_ID) {
+    return NextResponse.json({ type: LAUNCH_ACTIVITY });
+  }
 
   if (interaction.type === APPLICATION_COMMAND) {
     // The Activity's own "Launch" entry point: just open it.

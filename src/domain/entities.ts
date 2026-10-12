@@ -27,6 +27,8 @@ export interface Champion {
   variant?: string;
   title: string;
   location: string;
+  /** For Portuguese agreement: "da Cynthia", "invicta". */
+  feminine?: boolean;
   /** Sent out first: always `team[0]`. */
   team: Team;
 }
@@ -38,6 +40,7 @@ export interface ChampionSummary {
   variant: string | null;
   title: string;
   location: string;
+  feminine: boolean;
   team: string[];
 }
 

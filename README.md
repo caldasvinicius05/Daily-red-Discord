@@ -1,6 +1,6 @@
 # Daily Battle
 
-Uma batalha por dia contra um campeão das gerações 1 a 3 — como uma **Atividade do Discord** para jogar com os amigos.
+Uma batalha por dia contra um campeão das gerações 1 a 4 — como uma **Atividade do Discord** para jogar com os amigos.
 
 Todo mundo do servidor recebe **o mesmo time de seis Pokémon** a cada dia e tem **uma única chance** na diária. O resultado entra no ranking do servidor e pode ser postado no chat. O modo treino é ilimitado e não conta para nada.
 
@@ -8,11 +8,12 @@ Todo mundo do servidor recebe **o mesmo time de seis Pokémon** a cada dia e tem
 
 ## Como funciona
 
-- **Time do dia:** uma seed baseada na data sorteia 6 Pokémon entre todos os 193 em forma final das gerações 1 a 3 (sem lendários), com sets competitivos gerados pelo gerador da Gen 3 do Showdown, todos no nível 100. O "dia" segue o horário de São Paulo, então todos do servidor estão sempre no mesmo desafio.
+- **Time do dia:** uma seed baseada na data sorteia 6 Pokémon entre os 228 em forma final das gerações 1 a 4 (sem lendários), com sets competitivos gerados pelo gerador da Gen 4 do Showdown, todos no nível 100. Pokémon que ganharam evolução na Gen 4 aparecem já evoluídos (Murkrow → Honchkrow, Electabuzz → Electivire). Itens que prendem num golpe só (Choice Band, Specs e Scarf) viram Leftovers. O "dia" segue o horário de São Paulo, então todos do servidor estão sempre no mesmo desafio.
 - **Mesma sorte para todos:** a diária usa a mesma seed de batalha para todo mundo — quem fizer as mesmas escolhas tem exatamente o mesmo resultado.
-- **Campeões:** Blue (time do Ginásio de Viridian em HeartGold/SoulSilver), Lance, Red, Steven e Wallace, com os times dos jogos e sets competitivos de Gen 3. O campeão do dia é sorteado entre os que **ainda não apareceram na semana** (segunda a domingo) e fica guardado no banco. Com 5 campeões, todos aparecem uma vez nos primeiros dias e os dois últimos dias da semana sorteiam uma nova rodada, sem repetir o campeão do dia anterior. O campeão começa sempre com o primeiro Pokémon do time e escolhe golpes com base em cálculo de dano.
-- **Treino:** ilimitado, com o mesmo time do dia e um campeão sorteado a cada partida.
-- **Batalha:** motor do Pokémon Showdown com as regras da Gen 3 (categoria física/especial pelo tipo do golpe, mecânicas da época).
+- **Campeões:** Blue (time do Ginásio de Viridian em HeartGold/SoulSilver), Lance, Red, Steven, Wallace e Cynthia (time de Platinum), com sets competitivos validados nas regras da Gen 4. O campeão do dia é sorteado entre os que **ainda não apareceram na semana** (segunda a domingo) e fica guardado no banco. Com 6 campeões, todos aparecem uma vez e o domingo começa uma nova rodada, nunca repetindo o campeão do dia anterior. O campeão começa sempre com o primeiro Pokémon do time e escolhe golpes com base em cálculo de dano.
+- **Treino:** ilimitado, com o mesmo time do dia; o jogador escolhe o campeão (ou deixa no sorteio).
+- **Batalha:** motor do Pokémon Showdown com as regras da Gen 4 (cada golpe com sua categoria física/especial).
+- **Resultado no canal:** quando alguém termina a diária, o bot posta no canal da atividade uma mensagem no estilo do Wordle — sequência de dias do servidor, campeões derrotados no total, top do dia, um card com o resultado de cada jogador e o botão **Jogar agora!**. A mensagem é editada conforme mais gente termina (uma por servidor por dia).
 
 ## Versões
 
@@ -21,6 +22,7 @@ Todo mundo do servidor recebe **o mesmo time de seis Pokémon** a cada dia e tem
 | 1.0 | Daily Red | Uma batalha por dia contra o Red |
 | 2.0 | Daily Champion | Campeões das gerações 1 a 3 com rodízio semanal, pool com todas as formas finais |
 | 2.1 | Daily Battle | Um único time do Blue (Viridian, HGSS), sem Choice Band no time do jogador, tipos visíveis na troca |
+| 3.0 | Daily Battle | Gen 4: Cynthia, pool até Arceus com evoluções da Gen 4, escolha do campeão no treino, mensagem de resultado estilo Wordle |
 
 ## Funcionalidades
 
@@ -29,7 +31,8 @@ Todo mundo do servidor recebe **o mesmo time de seis Pokémon** a cada dia e tem
 - Batalha animada: barras de HP, narração em português, clima, mudanças de atributo, dicas de efetividade
 - Histórico sempre aberto ao lado, com dano/cura exatos, itens, status e trocas
 - Painel de troca compacto sobre a arena, com os tipos de cada Pokémon
-- Resultado com texto para compartilhar e botão **Postar no Discord**
+- Resultado com texto para compartilhar, botão **Postar no Discord** e resumo do servidor (sequência, campeões derrotados, top do dia)
+- Mensagem automática do resultado do dia no canal, estilo Wordle
 - Painel **Na atividade agora** com o status do dia de quem está na atividade
 - Comando **`/dailybattle`** com o ranking de hoje no chat
 - Estatísticas: jogos, % de vitórias, sequência, recorde e dias seguidos
@@ -75,7 +78,7 @@ Requisitos: Node.js 24+.
    CLIENT_SECRET=...    # Discord Developer Portal → OAuth2
    PUBLIC_KEY=...       # Discord Developer Portal → General Information
    ```
-   Opcionais: `DATABASE_URL` (padrão `file:./dailyred.db`), `DATABASE_AUTH_TOKEN`, `SESSION_SECRET`.
+   Opcionais: `DATABASE_URL` (padrão `file:./dailyred.db`), `DATABASE_AUTH_TOKEN`, `SESSION_SECRET`, `BOT_TOKEN` (mensagem de resultado no canal) e `PUBLIC_URL` (endereço público, para o card da mensagem; na Vercel é descoberto sozinho).
 3. Suba o app:
    ```bash
    npm run dev
@@ -110,6 +113,7 @@ O endereço do túnel muda a cada execução; atualize o URL Mapping quando isso
    | `DATABASE_URL` | `libsql://<banco>-<usuario>.turso.io` |
    | `DATABASE_AUTH_TOKEN` | Token do Turso |
    | `SESSION_SECRET` | Valor aleatório: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+   | `BOT_TOKEN` | Developer Portal → **Bot** → *Reset Token* (para a mensagem de resultado no canal) |
 
 3. No Developer Portal, aponte para o endereço fixo da Vercel:
    - **URL Mappings:** `/` → `seu-app.vercel.app`
@@ -118,6 +122,8 @@ O endereço do túnel muda a cada execução; atualize o URL Mapping quando isso
    ```bash
    npm run register-commands
    ```
+
+5. Para a mensagem de resultado no canal, o **bot** do app precisa estar no servidor: Developer Portal → **OAuth2 → URL Generator**, marque os escopos `bot` e `applications.commands` e as permissões *View Channels*, *Send Messages* e *Embed Links*; abra o link gerado e escolha o servidor. Sem `BOT_TOKEN` o resto funciona normalmente e o resumo aparece só dentro da atividade.
 
 Cada push na branch `master` gera um novo deploy automaticamente. O login de teste fica desativado em produção.
 
@@ -136,7 +142,9 @@ Cada push na branch `master` gera um novo deploy automaticamente. O login de tes
 ## Personalizando
 
 - **Campeões e seus sets:** [`src/domain/data/champions.ts`](src/domain/data/champions.ts). Os sets são validados pelo próprio Showdown nos testes (`npm test`). Ao mudar sets ou regras do pool, aumente `DATA_VERSION`.
-- **Pool do jogador:** [`src/infrastructure/showdown/ShowdownTeamFactory.ts`](src/infrastructure/showdown/ShowdownTeamFactory.ts) (formas finais das gerações 1 a 3, sem lendários).
+- **Pool do jogador:** [`src/infrastructure/showdown/ShowdownTeamFactory.ts`](src/infrastructure/showdown/ShowdownTeamFactory.ts) (formas finais até a Gen 4, sem lendários).
+- **Geração das regras:** [`src/infrastructure/showdown/generation.ts`](src/infrastructure/showdown/generation.ts) (`GEN` e último número da Pokédex).
+- **Mensagem e card do resultado:** [`src/infrastructure/discord/messages.ts`](src/infrastructure/discord/messages.ts) e [`src/app/api/_lib/ResultsCard.tsx`](src/app/api/_lib/ResultsCard.tsx).
 - **Rodízio dos campeões:** [`src/domain/rules/championRotation.ts`](src/domain/rules/championRotation.ts).
 - **Fuso do "dia" e data de lançamento:** [`src/domain/rules/gameDate.ts`](src/domain/rules/gameDate.ts).
 - **IA dos campeões:** [`src/infrastructure/showdown/redAI.ts`](src/infrastructure/showdown/redAI.ts).

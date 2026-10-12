@@ -133,10 +133,10 @@ export function HomeScreen({ busy, error, onPlayDaily, onResumeDaily, onPractice
           </div>
         </div>
 
-        <aside className={styles.summit} aria-label={`Campeão de hoje: ${champion.name}`}>
+        <aside className={styles.summit} aria-label={`${champion.feminine ? "Campeã" : "Campeão"} de hoje: ${champion.name}`}>
           <div className={styles.summitHeader}>
             <div>
-              <span className={styles.summitKicker}>Campeão de hoje</span>
+              <span className={styles.summitKicker}>{champion.feminine ? "Campeã" : "Campeão"} de hoje</span>
               <span className={cx(styles.redName, "logo-font")}>{champion.name.toUpperCase()}</span>
             </div>
             <span className={styles.summitHint}>
@@ -156,8 +156,8 @@ export function HomeScreen({ busy, error, onPlayDaily, onResumeDaily, onPractice
             ))}
           </div>
           <p className={styles.summitNote}>
-            Começa com {champion.team[0]} e nunca troca por vontade própria. Não repete na semana. No treino, o campeão é
-            sorteado a cada partida.
+            Começa com {champion.team[0]} e nunca troca por vontade própria. Todos os campeões aparecem antes de alguém
+            repetir na semana. No treino, você escolhe contra quem jogar.
           </p>
         </aside>
       </section>

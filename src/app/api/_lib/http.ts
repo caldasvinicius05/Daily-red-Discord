@@ -71,6 +71,13 @@ export const playerActionSchema = z.discriminatedUnion("type", [
 export const startBattleSchema = z.object({
   mode: z.enum(["daily", "practice"]),
   leadIndex: z.number().int().min(0).max(5),
+  /** Practice only; omitted or null → a random champion. */
+  championId: z.string().min(1).max(40).nullish(),
+  /** Discord channel the Activity runs in, where the day's results get posted. */
+  channelId: z
+    .string()
+    .regex(/^\d{5,25}$/)
+    .nullish(),
 });
 
 export const discordLoginSchema = z.object({

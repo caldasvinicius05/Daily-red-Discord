@@ -1,25 +1,20 @@
-import { Dex } from "pokemon-showdown";
 import type { MoveInfo, Pokedex, SpeciesInfo } from "@/application/ports";
-
-const gen3 = Dex.forGen(3);
-
-/** Before Gen 4, whether a move is physical or special depended only on its type. */
-const SPECIAL_TYPES = new Set(["Fire", "Water", "Grass", "Electric", "Psychic", "Ice", "Dragon", "Dark"]);
+import { dex, GEN } from "./generation";
 
 export class ShowdownPokedex implements Pokedex {
   species(name: string): SpeciesInfo {
-    const s = gen3.species.get(name);
+    const s = dex.species.get(name);
     if (!s.exists) throw new Error(`Unknown species: ${name}`);
     return { num: s.num, types: [...s.types], baseStats: { ...s.baseStats } };
   }
 
   move(name: string): MoveInfo {
-    const m = gen3.moves.get(name);
+    const m = dex.moves.get(name);
     if (!m.exists) throw new Error(`Unknown move: ${name}`);
-    const category = m.category === "Status" ? "Status" : SPECIAL_TYPES.has(m.type) ? "Special" : "Physical";
     return {
       type: m.type,
-      category,
+      // From Gen 4 on, each move has its own category.
+      category: m.category,
       power: m.basePower,
       accuracy: m.accuracy,
       priority: m.priority,
@@ -28,24 +23,24 @@ export class ShowdownPokedex implements Pokedex {
   }
 
   itemDescription(name: string): string {
-    const item = gen3.items.get(name);
+    const item = dex.items.get(name);
     return item.shortDesc || item.desc || "";
   }
 
   abilityDescription(name: string): string {
-    const ability = gen3.abilities.get(name);
+    const ability = dex.abilities.get(name);
     return ability.shortDesc || ability.desc || "";
   }
 
   allMoves(): readonly string[] {
-    return gen3.moves.all().filter((m) => m.exists && m.gen <= 3 && !m.isNonstandard).map((m) => m.name);
+    return dex.moves.all().filter((m) => m.exists && m.gen <= GEN && !m.isNonstandard).map((m) => m.name);
   }
 
   allItems(): readonly string[] {
-    return gen3.items.all().filter((i) => i.exists && i.gen <= 3 && !i.isNonstandard).map((i) => i.name);
+    return dex.items.all().filter((i) => i.exists && i.gen <= GEN && !i.isNonstandard).map((i) => i.name);
   }
 
   allAbilities(): readonly string[] {
-    return gen3.abilities.all().filter((a) => a.exists && a.gen <= 3 && a.num > 0 && !a.isNonstandard).map((a) => a.name);
+    return dex.abilities.all().filter((a) => a.exists && a.gen <= GEN && a.num > 0 && !a.isNonstandard).map((a) => a.name);
   }
 }

@@ -61,6 +61,8 @@ export interface LogContext {
   /** Species by team slot, per side. */
   roster: Record<BattleSide, readonly string[]>;
   championName: string;
+  /** "do Lance", "da Cynthia". */
+  championOf: string;
   /** The name the player's side is registered with in the engine, to tell who won. */
   playerName: string;
 }
@@ -80,7 +82,7 @@ function ident(ctx: LogContext, raw: string | undefined): Ident {
   const side: BattleSide = pos.startsWith("p1") ? "player" : "red";
   const slot = slotFromNickname(name);
   const species = ctx.roster[side][slot] ?? name;
-  return { side, slot, species, label: side === "player" ? species : `${species} do ${ctx.championName}` };
+  return { side, slot, species, label: side === "player" ? species : `${species} ${ctx.championOf}` };
 }
 
 /** `86/261 par` or `0 fnt`. */

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { BattleResult } from "../entities";
 import { pickChampion, weekStart } from "./championRotation";
+import { serverStreak } from "./serverStreak";
 import { pickDailySpecies } from "./dailyTeam";
 import { addDays, challengeNumber, msUntilNextDay, toGameDate } from "./gameDate";
 import { createRandom } from "./random";
@@ -129,5 +130,20 @@ describe("share text", () => {
   it("shows knockouts on a loss", () => {
     const lost = { ...result("2026-10-12", false), redFainted: [true, false, false, false, false, false] };
     expect(buildShareText(lost, 4, 0, "Steven")).toBe("Daily Battle #4 — Steven venceu 💀\n🟥⬛⬛⬛⬛⬛ 1/6 derrubados · 20 turnos");
+  });
+});
+
+describe("serverStreak", () => {
+  const days = ["2026-10-08", "2026-10-09", "2026-10-11", "2026-10-12"];
+
+  it("counts consecutive played days up to today", () => {
+    expect(serverStreak(days, "2026-10-12")).toBe(2);
+    expect(serverStreak([...days, "2026-10-10"], "2026-10-12")).toBe(5);
+  });
+
+  it("keeps yesterday's streak alive while today is not played yet", () => {
+    expect(serverStreak(days, "2026-10-13")).toBe(2);
+    expect(serverStreak(days, "2026-10-14")).toBe(0);
+    expect(serverStreak([], "2026-10-12")).toBe(0);
   });
 });

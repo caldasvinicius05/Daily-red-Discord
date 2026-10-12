@@ -1,8 +1,9 @@
 import { calculate, Field, Generations, Move, Pokemon as CalcPokemon } from "@smogon/calc";
 import type { Battle, Pokemon } from "pokemon-showdown";
+import { GEN } from "./generation";
 import { isForcedSwitch, moveOptions } from "./requests";
 
-const gen = Generations.get(3);
+const gen = Generations.get(GEN);
 
 const WEATHER: Record<string, "Sand" | "Rain" | "Sun" | "Hail"> = {
   sandstorm: "Sand",
@@ -11,8 +12,8 @@ const WEATHER: Record<string, "Sand" | "Rain" | "Sun" | "Hail"> = {
   hail: "Hail",
 };
 
-const SLEEP_MOVES = new Set(["spore", "sleeppowder", "hypnosis"]);
-const HEAL_MOVES = new Set(["morningsun", "recover", "softboiled", "synthesis", "moonlight"]);
+const SLEEP_MOVES = new Set(["spore", "sleeppowder", "hypnosis", "darkvoid", "lovelykiss", "sing", "grasswhistle"]);
+const HEAL_MOVES = new Set(["morningsun", "recover", "softboiled", "synthesis", "moonlight", "roost", "slackoff", "milkdrink", "healorder"]);
 const SELF_KO_MOVES = new Set(["selfdestruct", "explosion"]);
 
 function toCalc(p: Pokemon): CalcPokemon {

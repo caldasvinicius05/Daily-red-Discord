@@ -20,13 +20,16 @@ interface Props {
   busy: boolean;
   error: string | null;
   onBack: () => void;
-  onConfirm: (leadIndex: number) => void;
+  /** `championId`: practice only, null = random. */
+  onConfirm: (leadIndex: number, championId: string | null) => void;
 }
 
 export function LeadScreen({ mode, initialToday, busy, error, onBack, onConfirm }: Props) {
   const typesOf = useSpeciesTypes();
   const [today, setToday] = useState<TodayDTO | null>(initialToday);
   const [lead, setLead] = useState(0);
+  // Practice opponent; null = drawn at random when the battle starts.
+  const [practiceChampionId, setPracticeChampionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!initialToday) void api.today().then(setToday);
@@ -44,9 +47,9 @@ export function LeadScreen({ mode, initialToday, busy, error, onBack, onConfirm 
   }
 
   const team = today.challenge.team;
-  const champion = today.champion;
-  const championLead = champion.team[0]!;
-  const championLeadTypes = typesOf(championLead);
+  const champion = mode === "daily" ? today.champion : (today.champions.find((c) => c.id === practiceChampionId) ?? null);
+  const championLead = champion?.team[0] ?? "";
+  const championLeadTypes = champion ? typesOf(championLead) : [];
   const chosen = team[lead]!;
   // Quick read of the matchup: best multiplier of the chosen lead's attacking types vs the champion's lead.
   const best = Math.max(...typesOf(chosen.species).map((t) => effectiveness(t, championLeadTypes)));
@@ -70,9 +73,41 @@ export function LeadScreen({ mode, initialToday, busy, error, onBack, onConfirm 
         <p>
           {mode === "daily"
             ? "Você tem uma chance hoje. A escolha do primeiro Pokémon vale muito."
-            : "Treino não conta para as estatísticas. O campeão é sorteado ao começar."}
+            : "Treino não conta para as estatísticas. Escolha contra quem treinar, ou deixe no sorteio."}
         </p>
       </header>
+
+      {mode === "practice" && (
+        <section className={styles.opponents} aria-label="Contra quem?">
+          <button
+            className={cx(styles.opponent, practiceChampionId === null && styles.opponentActive)}
+            aria-pressed={practiceChampionId === null}
+            onClick={() => setPracticeChampionId(null)}
+          >
+            <span className={styles.opponentRandom} aria-hidden="true">
+              ?
+            </span>
+            <span className={styles.opponentText}>
+              <strong>Sorteio</strong>
+              <small>Qualquer um</small>
+            </span>
+          </button>
+          {today.champions.map((c) => (
+            <button
+              key={c.id}
+              className={cx(styles.opponent, practiceChampionId === c.id && styles.opponentActive)}
+              aria-pressed={practiceChampionId === c.id}
+              onClick={() => setPracticeChampionId(c.id)}
+            >
+              <PokemonEmblem species={c.team[0]!} types={typesOf(c.team[0]!)} size={40} still />
+              <span className={styles.opponentText}>
+                <strong>{c.name}</strong>
+                <small>{c.title}</small>
+              </span>
+            </button>
+          ))}
+        </section>
+      )}
 
       <div className={styles.grid}>
         {team.map((set, i) => (
@@ -81,10 +116,10 @@ export function LeadScreen({ mode, initialToday, busy, error, onBack, onConfirm 
       </div>
 
       <footer className={styles.footer}>
-        {mode === "practice" ? (
+        {!champion ? (
           <div className={styles.practiceNote}>
             <strong>Campeão sorteado</strong>
-            <span>Pode ser qualquer um dos sete. Seu time é o mesmo da diária de hoje.</span>
+            <span>Pode ser qualquer um dos {today.champions.length}. Seu time é o mesmo da diária de hoje.</span>
           </div>
         ) : (
         <div className={styles.matchup}>
@@ -117,7 +152,7 @@ export function LeadScreen({ mode, initialToday, busy, error, onBack, onConfirm 
 
         <div className={styles.confirm}>
           {error && <p className={styles.error}>{error}</p>}
-          <Button variant="primary" size="lg" icon={<SwordIcon />} disabled={busy} onClick={() => onConfirm(lead)}>
+          <Button variant="primary" size="lg" icon={<SwordIcon />} disabled={busy} onClick={() => onConfirm(lead, mode === "practice" ? practiceChampionId : null)}>
             {busy ? "Subindo..." : "Começar batalha"}
           </Button>
         </div>

@@ -50,6 +50,77 @@
   border: 1px solid rgba(143, 211, 255, 0.35);
 }
 
+/* ---------- Practice opponent picker ---------- */
+.opponents {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: -6px 0 22px;
+}
+
+.opponent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 8px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(12, 19, 40, 0.7);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    transform 0.15s;
+}
+
+.opponent:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+}
+
+.opponentActive {
+  border-color: var(--ice);
+  background: rgba(143, 211, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(143, 211, 255, 0.3);
+}
+
+.opponentRandom {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px dashed var(--line-strong);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ice);
+}
+
+.opponentText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.opponentText strong {
+  font-size: 14px;
+}
+
+.opponentText small {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+@media (max-width: 560px) {
+  .opponents {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));

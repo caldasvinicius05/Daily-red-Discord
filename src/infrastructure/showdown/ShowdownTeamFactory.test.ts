@@ -6,14 +6,31 @@ const factory = new ShowdownTeamFactory();
 const days = Array.from({ length: 120 }, (_, i) => addDays("2026-10-12", i));
 
 describe("ShowdownTeamFactory", () => {
-  it("draws from fully evolved, non-legendary Gen 1–3 Pokémon", () => {
+  it("draws from fully evolved, non-legendary Pokémon up to Gen 4", () => {
     const pool = factory.poolSpecies();
-    expect(pool).toHaveLength(193);
+    expect(pool).toHaveLength(228);
     expect(pool).toContain("Raichu");
     expect(pool).not.toContain("Pikachu"); // evolves; exclusive to Red
     expect(pool).not.toContain("Charmeleon");
     expect(pool).not.toContain("Mewtwo");
-    expect(pool).toContain("Magneton"); // Magnezone only arrives in Gen 4
+    expect(pool).not.toContain("Arceus");
+    expect(pool).toContain("Garchomp");
+    expect(pool).not.toContain("Unown"); // no competitive sets
+  });
+
+  it("replaces Pokémon that gained an evolution in Gen 4 by that evolution", () => {
+    const pool = factory.poolSpecies();
+    for (const [old, evolved] of [
+      ["Murkrow", "Honchkrow"],
+      ["Electabuzz", "Electivire"],
+      ["Magneton", "Magnezone"],
+      ["Togetic", "Togekiss"],
+      ["Porygon2", "Porygon-Z"],
+      ["Dusclops", "Dusknoir"],
+    ]) {
+      expect(pool).not.toContain(old);
+      expect(pool).toContain(evolved);
+    }
   });
 
   it("gives everyone the same team on the same day", () => {
@@ -22,7 +39,7 @@ describe("ShowdownTeamFactory", () => {
 
   it("never hands out items that lock the Pokémon into one move", () => {
     const items = days.flatMap((day) => factory.dailyTeam(day).map((set) => set.item));
-    expect(items).not.toContain("Choice Band");
+    for (const choice of ["Choice Band", "Choice Specs", "Choice Scarf"]) expect(items).not.toContain(choice);
     expect(items).toContain("Leftovers");
   });
 

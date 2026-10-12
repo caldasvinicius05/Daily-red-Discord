@@ -6,7 +6,7 @@ import { api, ApiError, setSessionToken } from "./api/client";
 import type { BattleDTO, PlayerDTO, ReferenceDTO, SessionDTO, TodayDTO } from "./api/types";
 import { AppContext } from "./AppContext";
 import { Background } from "./components/Background";
-import { isInsideDiscord, loginWithDiscord } from "./discord/discordAuth";
+import { getDiscordChannelId, isInsideDiscord, loginWithDiscord } from "./discord/discordAuth";
 import { readJSON, writeJSON } from "./lib/storage";
 import { BattleScreen } from "./screens/BattleScreen";
 import { BootScreen } from "./screens/BootScreen";
@@ -84,11 +84,11 @@ export function App() {
   };
 
   /** Daily: resumes if already started. Starting asks the server, which also enforces one daily per day. */
-  const startBattle = async (mode: BattleMode, leadIndex: number) => {
+  const startBattle = async (mode: BattleMode, leadIndex: number, championId: string | null) => {
     setBusy(true);
     setError(null);
     try {
-      setScreen({ name: "battle", battle: await api.startBattle(mode, leadIndex) });
+      setScreen({ name: "battle", battle: await api.startBattle({ mode, leadIndex, championId, channelId: getDiscordChannelId() }) });
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Não foi possível começar a batalha");
     } finally {
@@ -133,7 +133,7 @@ export function App() {
               setError(null);
               setScreen({ name: "home" });
             }}
-            onConfirm={(leadIndex) => startBattle(screen.mode, leadIndex)}
+            onConfirm={(leadIndex, championId) => startBattle(screen.mode, leadIndex, championId)}
           />
         )}
         {screen.name === "battle" && (

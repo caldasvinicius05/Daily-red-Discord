@@ -4,6 +4,7 @@ import type {
   BattleOutcome,
   BattleResult,
   BattleView,
+  ChampionSummary,
   GameDate,
   PlayerAction,
   StatSpread,
@@ -46,6 +47,8 @@ export interface BattleRecord extends BattleSetup {
   playerId: string;
   /** Discord server the battle was played from; scopes the leaderboard. */
   guildId: string | null;
+  /** Channel the Activity was opened in; where the day's results get posted. */
+  channelId: string | null;
   mode: BattleMode;
   date: GameDate;
   actions: PlayerAction[];
@@ -68,6 +71,8 @@ export interface BattleRepository {
   listDailyResults(playerId: string): Promise<BattleResult[]>;
   /** Finished daily battles played from one Discord server on one date. */
   listFinishedDailyByGuild(guildId: string, date: GameDate): Promise<BattleRecord[]>;
+  /** Every finished daily battle of one Discord server: when, and whether it was won. */
+  listDailyHistoryByGuild(guildId: string): Promise<{ date: GameDate; won: boolean }[]>;
 }
 
 export interface Player {
@@ -115,7 +120,6 @@ export interface SpeciesInfo {
 
 export interface MoveInfo {
   type: string;
-  /** Gen 3 rules: the category comes from the move's type. */
   category: "Physical" | "Special" | "Status";
   power: number;
   /** `true` = never misses. */
@@ -129,7 +133,7 @@ export interface Pokedex {
   move(name: string): MoveInfo;
   itemDescription(name: string): string;
   abilityDescription(name: string): string;
-  /** Every move, item and ability that exists in Gen 3 (names). */
+  /** Every move, item and ability that exists in the game's generation (names). */
   allMoves(): readonly string[];
   allItems(): readonly string[];
   allAbilities(): readonly string[];
@@ -150,6 +154,48 @@ export interface DiscordGateway {
   getUser(accessToken: string): Promise<DiscordUser>;
   /** Ids of the servers the user is in (needs the `guilds` scope). */
   getGuildIds(accessToken: string): Promise<string[]>;
+}
+
+/** One player's finished daily, ranked within their server. */
+export interface LeaderboardEntry {
+  rank: number;
+  player: Pick<Player, "id" | "displayName" | "avatar">;
+  result: BattleResult;
+  finishedAt: Date;
+}
+
+/** A server's day at a glance: the Wordle-style results message. */
+export interface ServerSummary {
+  guildId: string;
+  date: GameDate;
+  challengeNumber: number;
+  champion: ChampionSummary;
+  /** Days in a row someone from the server played the daily. */
+  streak: number;
+  /** Daily wins of the server's players, all time. */
+  championsDefeated: number;
+  /** Today's ranking. */
+  entries: LeaderboardEntry[];
+}
+
+/** Where a server's results message of a day was posted, so later results edit it. */
+export interface DailyAnnouncement {
+  channelId: string;
+  messageId: string;
+}
+
+export interface DailyAnnouncementRepository {
+  get(guildId: string, date: GameDate): Promise<DailyAnnouncement | null>;
+  save(guildId: string, date: GameDate, announcement: DailyAnnouncement): Promise<void>;
+}
+
+/**
+ * Posts a server's results of the day in a Discord channel (Wordle-style), or edits the
+ * message posted earlier. Returns where the message is, or null when posting is not
+ * possible (no bot token, missing permission...).
+ */
+export interface DailyAnnouncer {
+  publish(summary: ServerSummary, target: { channelId: string; messageId: string | null }): Promise<DailyAnnouncement | null>;
 }
 
 // ---------- System ----------

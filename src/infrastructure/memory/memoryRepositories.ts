@@ -1,5 +1,13 @@
 import { ConflictError } from "@/application/errors";
-import type { BattleRecord, BattleRepository, DailyChampionRepository, Player, PlayerRepository } from "@/application/ports";
+import type {
+  BattleRecord,
+  BattleRepository,
+  DailyAnnouncement,
+  DailyAnnouncementRepository,
+  DailyChampionRepository,
+  Player,
+  PlayerRepository,
+} from "@/application/ports";
 import type { BattleResult, GameDate } from "@/domain";
 
 /** In-memory adapters: used by tests, and handy to run the app without a database. */
@@ -43,6 +51,12 @@ export class MemoryBattleRepository implements BattleRepository {
       .filter((r) => r.mode === "daily" && r.guildId === guildId && r.date === date && r.result)
       .map((r) => structuredClone(r));
   }
+
+  async listDailyHistoryByGuild(guildId: string): Promise<{ date: GameDate; won: boolean }[]> {
+    return [...this.records.values()]
+      .filter((r) => r.mode === "daily" && r.guildId === guildId && r.result)
+      .map((r) => ({ date: r.date, won: r.status === "won" }));
+  }
 }
 
 export class MemoryPlayerRepository implements PlayerRepository {
@@ -77,5 +91,18 @@ export class MemoryDailyChampionRepository implements DailyChampionRepository {
   async claim(date: GameDate, championId: string): Promise<string> {
     if (!this.byDate.has(date)) this.byDate.set(date, championId);
     return this.byDate.get(date)!;
+  }
+}
+
+export class MemoryDailyAnnouncementRepository implements DailyAnnouncementRepository {
+  private readonly byKey = new Map<string, DailyAnnouncement>();
+
+  async get(guildId: string, date: GameDate): Promise<DailyAnnouncement | null> {
+    const found = this.byKey.get(`${guildId}:${date}`);
+    return found ? { ...found } : null;
+  }
+
+  async save(guildId: string, date: GameDate, announcement: DailyAnnouncement): Promise<void> {
+    this.byKey.set(`${guildId}:${date}`, { ...announcement });
   }
 }

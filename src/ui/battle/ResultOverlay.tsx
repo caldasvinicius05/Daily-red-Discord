@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
-import type { BattleDTO } from "../api/types";
+import { useEffect, useMemo, useState } from "react";
+import { api } from "../api/client";
+import type { BattleDTO, ServerSummaryDTO } from "../api/types";
 import { PracticeIcon } from "../components/icons";
 import { ShareButton } from "../components/ShareButton";
-import { Button, cx } from "../components/ui";
+import { Avatar, Button, cx } from "../components/ui";
 import { plural } from "../lib/format";
 import styles from "./battle.module.css";
 
@@ -39,6 +40,51 @@ function Confetti() {
   );
 }
 
+const TOP_SHOWN = 5;
+
+function verdict(result: BattleDTO["result"] & object): string {
+  if (result.abandoned) return "desistiu";
+  if (result.won) return `venceu · ${result.playerAlive.filter(Boolean).length}/6 de pé`;
+  return `perdeu · ${result.redFainted.filter(Boolean).length}/6 derrubados`;
+}
+
+/** The server's day, Wordle style: streak, champions defeated and today's top players. */
+function ServerSummary() {
+  const [summary, setSummary] = useState<ServerSummaryDTO | null>(null);
+
+  useEffect(() => {
+    // Best effort: the result screen works without it (e.g. outside a server).
+    api.serverSummary().then(setSummary, () => setSummary(null));
+  }, []);
+
+  if (!summary) return null;
+  return (
+    <section className={styles.server} aria-label="Resultado do servidor">
+      <div className={styles.serverStats}>
+        <div>
+          <strong>🔥 {summary.streak}</strong>
+          <small>{summary.streak === 1 ? "dia de sequência" : "dias de sequência"}</small>
+        </div>
+        <div>
+          <strong>🏆 {summary.championsDefeated}</strong>
+          <small>campeões derrotados</small>
+        </div>
+      </div>
+      <ol className={styles.serverTop}>
+        {summary.entries.slice(0, TOP_SHOWN).map((entry) => (
+          <li key={entry.player.id}>
+            <span className={styles.serverRank}>{entry.rank === 1 ? "👑" : `${entry.rank}.`}</span>
+            <Avatar id={entry.player.id} name={entry.player.displayName} avatar={entry.player.avatar} size={26} />
+            <span className={styles.serverName}>{entry.player.displayName}</span>
+            <span className={cx(styles.serverVerdict, entry.result.won && styles.serverWon)}>{verdict(entry.result)}</span>
+          </li>
+        ))}
+      </ol>
+      {summary.entries.length > TOP_SHOWN && <small className={styles.serverMore}>…e mais {summary.entries.length - TOP_SHOWN} no ranking.</small>}
+    </section>
+  );
+}
+
 export function ResultOverlay({ battle, onHome, onPractice }: { battle: BattleDTO; onHome: () => void; onPractice: () => void }) {
   const result = battle.result!;
   const survivors = result.playerAlive.filter(Boolean).length;
@@ -49,7 +95,7 @@ export function ResultOverlay({ battle, onHome, onPractice }: { battle: BattleDT
     ? `Você derrotou ${battle.champion.name} — ${battle.champion.location}.`
     : result.abandoned
       ? "A batalha ficou para trás. Amanhã tem outra."
-      : `${battle.champion.name} continua invicto... por enquanto.`;
+      : `${battle.champion.name} continua ${battle.champion.feminine ? "invicta" : "invicto"}... por enquanto.`;
 
   return (
     <div className={styles.resultBackdrop}>
@@ -88,6 +134,8 @@ export function ResultOverlay({ battle, onHome, onPractice }: { battle: BattleDT
             <strong>{plural(result.turns, "turno", "turnos")}</strong>
           </div>
         </div>
+
+        {battle.mode === "daily" && <ServerSummary />}
 
         {battle.shareText && (
           <div className={styles.share}>

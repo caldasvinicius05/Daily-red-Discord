@@ -7,3 +7,4 @@ export * from "./rules/gameDate";
 export * from "./rules/leaderboard";
 export * from "./rules/share";
 export * from "./rules/stats";
+export * from "./rules/serverStreak";

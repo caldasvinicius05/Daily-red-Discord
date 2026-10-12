@@ -38,7 +38,11 @@ describe("ShowdownBattleEngine", () => {
     expect(view.red.active).toBe(0); // Pikachu leads
     expect(view.choices.moves).toHaveLength(4);
     expect(view.choices.switches).toEqual([1, 2, 3, 4, 5]);
-    expect(steps[0]!.map((e) => e.kind)).toEqual(["switch", "switch", "turn"]);
+    const kinds = steps[0]!.map((e) => e.kind);
+    // Both leads come in; entry abilities (Intimidate, Download...) may fire before turn 1.
+    expect(kinds.slice(0, 2)).toEqual(["switch", "switch"]);
+    expect(kinds.at(-1)).toBe("turn");
+    for (const e of steps[0]!) expect(e.text).not.toMatch(/\[from\]|\|/);
   });
 
   it("respects the chosen lead", () => {
