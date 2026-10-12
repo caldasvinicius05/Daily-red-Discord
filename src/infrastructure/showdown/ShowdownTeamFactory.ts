@@ -38,6 +38,19 @@ export function buildPlayerPool(): string[] {
     .sort();
 }
 
+/**
+ * Items that lock the holder into a single move. In Gen 3 that is only Choice Band.
+ * Competitive, but it makes the daily team feel restrictive, so it becomes Leftovers —
+ * the most common item on those attackers after Choice Band, and one that keeps all
+ * four moves usable.
+ */
+const MOVE_LOCKING_ITEMS = new Set(["Choice Band"]);
+const LOCKING_ITEM_REPLACEMENT = "Leftovers";
+
+function playableItem(item: string): string {
+  return MOVE_LOCKING_ITEMS.has(item) ? LOCKING_ITEM_REPLACEMENT : item;
+}
+
 function toSodiumSeed(seed: string) {
   const hex = [0, 1, 2, 3].map((i) => hashSeed(`${seed}#${i}`).toString(16).padStart(8, "0")).join("");
   return `sodium,${hex}` as const;
@@ -84,7 +97,7 @@ export class ShowdownTeamFactory implements TeamFactory {
     return {
       // The generator may return a cosmetic forme ("Unown-D"); keep the pool's base species.
       species,
-      item: gen3.items.get(generated.item).name || "",
+      item: playableItem(gen3.items.get(generated.item).name || ""),
       ability: gen3.abilities.get(generated.ability).name,
       // Random Battle sets don't use natures; a neutral one keeps their EV math intact.
       nature: generated.nature || "Hardy",
