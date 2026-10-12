@@ -1,0 +1,245 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  text-align: left;
+  color: var(--text);
+  font: inherit;
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--c1) 26%, transparent) 0%, transparent 46%),
+    linear-gradient(180deg, rgba(30, 42, 82, 0.82), rgba(14, 21, 44, 0.9));
+  border: 1px solid color-mix(in srgb, var(--c1) 35%, var(--line));
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  isolation: isolate;
+  animation: card-in 0.55s var(--ease-out) both;
+  transition:
+    transform 0.25s var(--ease-out),
+    border-color 0.25s,
+    box-shadow 0.25s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--c1) 70%, transparent);
+  box-shadow:
+    0 16px 36px -12px color-mix(in srgb, var(--c1) 55%, transparent),
+    var(--shadow-sm);
+}
+
+button.card {
+  cursor: pointer;
+}
+
+.glow {
+  position: absolute;
+  top: -40%;
+  right: -30%;
+  width: 70%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--c2) 40%, transparent), transparent 70%);
+  filter: blur(10px);
+  z-index: -1;
+  opacity: 0.8;
+}
+
+.selected {
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 2px var(--gold),
+    0 18px 40px -10px rgba(255, 209, 102, 0.45);
+  transform: translateY(-3px);
+}
+
+.leadTag {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #2a1c00;
+  background: var(--gold);
+  box-shadow: 0 4px 12px rgba(255, 209, 102, 0.4);
+  animation: tag-in 0.35s var(--ease-spring);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dex {
+  font-size: 13px;
+  color: var(--text-faint);
+  letter-spacing: 0.06em;
+}
+
+.name {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0;
+}
+
+.details > div {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(5, 9, 20, 0.35);
+  border: 1px solid var(--line);
+  min-width: 0;
+}
+
+.details dt {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.details dd {
+  margin: 3px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Original generic "held item" mark: a small faceted gem. */
+.itemGem {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  background: linear-gradient(135deg, #fff 0%, var(--c1) 45%, var(--c2) 100%);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--c1) 70%, transparent);
+}
+
+.moves {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.move {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  box-shadow:
+    inset 0 -2px 0 rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  min-width: 0;
+}
+
+.moveIcon,
+.moveCat {
+  flex: none;
+  width: 13px;
+  height: 13px;
+}
+
+.moveCat {
+  margin-left: auto;
+  opacity: 0.75;
+}
+
+.moveName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.bst {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 64px;
+}
+
+.bst span {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--c1);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--c1) 50%, transparent);
+}
+
+.bst small {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.pick {
+  gap: 12px;
+}
+
+.pick .name {
+  font-size: 19px;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+}
+
+@keyframes tag-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}

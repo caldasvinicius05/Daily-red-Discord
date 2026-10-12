@@ -1,0 +1,126 @@
+.title {
+  margin: 0 0 18px;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.group {
+  margin-bottom: 18px;
+}
+
+.group h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.segment {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 11px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(5, 9, 20, 0.35);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+
+.segment small {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.segment:hover {
+  border-color: var(--line-strong);
+}
+
+.active {
+  border-color: var(--ice);
+  background: rgba(143, 211, 255, 0.1);
+  box-shadow: 0 0 0 1px var(--ice) inset;
+}
+
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.toggle input {
+  position: absolute;
+  opacity: 0;
+}
+
+.toggle strong {
+  display: block;
+}
+
+.toggle small {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-faint);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.switch {
+  flex: none;
+  position: relative;
+  width: 42px;
+  height: 24px;
+  margin-top: 2px;
+  border-radius: 999px;
+  background: #27314f;
+  border: 1px solid var(--line-strong);
+  transition: background 0.2s;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.25s var(--ease-spring);
+}
+
+.toggle input:checked + .switch {
+  background: var(--good);
+}
+
+.toggle input:checked + .switch::after {
+  transform: translateX(18px);
+}
+
+.toggle input:focus-visible + .switch {
+  outline: 2px solid var(--ice);
+  outline-offset: 2px;
+}
+
+.note {
+  margin: 4px 0 18px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}

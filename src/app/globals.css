@@ -1,0 +1,153 @@
+/* ============================================================
+   Daily Red — design tokens
+   Night on the summit: deep blues, snow whites, one hot red.
+   ============================================================ */
+:root {
+  --bg-0: #060914;
+  --bg-1: #0b1226;
+  --bg-2: #121c3a;
+  --panel: rgba(17, 26, 54, 0.72);
+  --panel-solid: #111a36;
+  /* Near-opaque panel: reads like frosted glass without a per-frame backdrop blur. */
+  --panel-opaque: linear-gradient(180deg, rgba(22, 32, 66, 0.94), rgba(13, 20, 42, 0.95));
+  --panel-raised: rgba(28, 40, 78, 0.78);
+  --line: rgba(150, 180, 255, 0.14);
+  --line-strong: rgba(150, 180, 255, 0.28);
+
+  --text: #eaf0ff;
+  --text-dim: #a9b6d9;
+  --text-faint: #6f7ea6;
+
+  --red: #ff3d4a;
+  --red-deep: #c4162a;
+  --red-glow: rgba(255, 61, 74, 0.45);
+  --gold: #ffd166;
+  --snow: #f3f7ff;
+  --ice: #8fd3ff;
+  --good: #4ade80;
+
+  --hp-high: #3ee07a;
+  --hp-mid: #f6c945;
+  --hp-low: #ff5a4f;
+
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 24px;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.35);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg-0);
+}
+
+/* No background on body: it would paint over the fixed backdrop (z-index -1). */
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  color: var(--text);
+  font-family: var(--font-ui), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--ice);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--red);
+  color: white;
+}
+
+/* Thin, unobtrusive scrollbars inside panels. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.pixel {
+  font-family: var(--font-pixel), monospace;
+}
+
+.logo-font {
+  font-family: var(--font-logo), monospace;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

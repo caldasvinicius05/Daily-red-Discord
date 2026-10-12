@@ -1,0 +1,321 @@
+.page {
+  width: min(1240px, 100%);
+  margin: 0 auto;
+  padding: 0 16px 48px;
+}
+
+.loading {
+  min-height: 60dvh;
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 28px;
+  padding: 30px;
+  border-radius: 28px;
+  background:
+    radial-gradient(90% 120% at 100% 0%, rgba(255, 61, 74, 0.2), transparent 55%),
+    radial-gradient(60% 90% at 0% 100%, rgba(98, 160, 255, 0.16), transparent 60%),
+    linear-gradient(160deg, rgba(26, 38, 78, 0.85), rgba(10, 16, 36, 0.9));
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  animation: hero-in 0.7s var(--ease-out);
+}
+
+.hero::after {
+  /* Thin red horizon line, like the summit at dusk. */
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--red), transparent);
+  opacity: 0.8;
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.kicker {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--red);
+  text-shadow: 0 0 16px var(--red-glow);
+}
+
+.headline {
+  margin: 0;
+  font-size: clamp(28px, 4.2vw, 46px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  background: linear-gradient(180deg, #fff 30%, #b9cbff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.date {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 16px;
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.resultPill {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 18px;
+  border-radius: 16px;
+  border: 1px solid;
+}
+
+.resultPill strong {
+  font-size: 15px;
+}
+
+.resultPill span {
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+
+.resultWin {
+  border-color: rgba(74, 222, 128, 0.45);
+  background: rgba(74, 222, 128, 0.1);
+  color: #b4f5cc;
+}
+
+.resultLoss {
+  border-color: rgba(255, 61, 74, 0.45);
+  background: rgba(255, 61, 74, 0.1);
+  color: #ffc1c6;
+}
+
+.error {
+  margin: 4px 0 0;
+  color: #ff9aa2;
+  font-size: 14px;
+}
+
+.countdown {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(5, 9, 20, 0.5);
+  border: 1px solid var(--line);
+  color: var(--text-dim);
+  font-size: 13.5px;
+}
+
+.countdown strong {
+  font-size: 18px;
+  color: var(--snow);
+  letter-spacing: 0.06em;
+}
+
+/* ---------- Red's summit card ---------- */
+.summit {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(5, 9, 20, 0.55), rgba(5, 9, 20, 0.25));
+  border: 1px solid rgba(255, 61, 74, 0.25);
+  box-shadow: inset 0 0 40px rgba(255, 61, 74, 0.06);
+}
+
+.summitHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.redName {
+  font-size: 22px;
+  color: var(--red);
+  text-shadow:
+    0 0 18px var(--red-glow),
+    2px 2px 0 #5a0b14;
+}
+
+.summitHint {
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+.redTeam {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.redMon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px 8px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+  animation: mon-in 0.5s var(--ease-out) both;
+}
+
+.summitNote {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+
+/* ---------- Stats ---------- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin: 18px 0 30px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 8px;
+  border-radius: 18px;
+  background: var(--panel-opaque);
+  border: 1px solid var(--line);
+}
+
+.stat strong {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.stat span {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.statAccent strong {
+  color: var(--gold);
+  text-shadow: 0 0 14px rgba(255, 209, 102, 0.5);
+}
+
+/* ---------- Team + side ---------- */
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items: start;
+}
+
+.sectionHeader {
+  margin-bottom: 14px;
+}
+
+.sectionHeader h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.sectionHeader p {
+  margin: 4px 0 0;
+  color: var(--text-faint);
+  font-size: 14px;
+}
+
+.teamGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.side {
+  position: sticky;
+  top: 16px;
+}
+
+@media (max-width: 1080px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+  .side {
+    position: static;
+  }
+}
+
+@media (max-width: 820px) {
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 22px;
+  }
+  .stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ctaRow > * {
+    flex: 1 1 100%;
+  }
+  .teamGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes mon-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}

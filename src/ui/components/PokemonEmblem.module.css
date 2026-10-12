@@ -1,0 +1,104 @@
+.emblem {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  transition: opacity 0.4s var(--ease-out);
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Static soft shadow under the orb (cheaper than filter: drop-shadow). */
+.shadow {
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 2%;
+  height: 16%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.45), transparent);
+  transform: translateY(18%);
+}
+
+/* Glow behind the orb: a plain gradient layer, animated with transform/opacity only. */
+.aura {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--c1) 55%, transparent) 50%,
+    color-mix(in srgb, var(--c2) 0%, transparent) 72%
+  );
+  animation: aura 3.2s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* The whole ring SVG rotates as one composited layer; nothing inside it repaints. */
+.ring {
+  animation: ring-spin 22s linear infinite;
+  will-change: transform;
+}
+
+.still .aura,
+.still .ring {
+  animation: none;
+  will-change: auto;
+}
+
+.glyph {
+  position: relative;
+  width: 38%;
+  height: 38%;
+  color: #fff;
+  /* Small, static icon: a drop shadow here is painted once. */
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+}
+
+.secondary {
+  position: absolute;
+  right: 12%;
+  bottom: 12%;
+  width: 26%;
+  height: 26%;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.secondary svg {
+  width: 62%;
+  height: 62%;
+  color: #fff;
+}
+
+.fainted {
+  filter: grayscale(1) brightness(0.55);
+  opacity: 0.55;
+}
+
+@keyframes aura {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+
+@keyframes ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

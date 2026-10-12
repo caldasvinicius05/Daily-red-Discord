@@ -1,0 +1,46 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+}
+
+.left {
+  min-width: 0;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  margin-right: 4px;
+  border-radius: 999px;
+  background: rgba(5, 9, 20, 0.45);
+  border: 1px solid var(--line);
+}
+
+.playerName {
+  font-size: 14px;
+  font-weight: 600;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 560px) {
+  .hideNarrow {
+    display: none;
+  }
+  .playerName {
+    max-width: 90px;
+  }
+}
