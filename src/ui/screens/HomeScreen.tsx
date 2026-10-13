@@ -19,6 +19,7 @@ interface Props {
   busy: boolean;
   error: string | null;
   onPlayDaily: (today: TodayDTO) => void;
+  /** Reopens an unfinished battle (daily or practice) where it stopped. */
   onResumeDaily: (battleId: string) => void;
   onPractice: (today: TodayDTO) => void;
 }
@@ -120,8 +121,19 @@ export function HomeScreen({ busy, error, onPlayDaily, onResumeDaily, onPractice
               </div>
             )}
             {daily.status === "finished" && <ShareButton text={daily.shareText} size="lg" />}
+            {today.practice && (
+              <Button
+                variant="secondary"
+                size="lg"
+                icon={<PracticeIcon />}
+                onClick={() => onResumeDaily(today.practice!.battleId)}
+                disabled={busy}
+              >
+                Continuar treino
+              </Button>
+            )}
             <Button variant="secondary" size="lg" icon={<PracticeIcon />} onClick={() => onPractice(today)} disabled={busy}>
-              Treinar
+              {today.practice ? "Novo treino" : "Treinar"}
             </Button>
           </div>
           {error && <p className={styles.error}>{error}</p>}

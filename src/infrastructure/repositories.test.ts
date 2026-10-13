@@ -78,6 +78,18 @@ describe.each(adapters)("%s repositories", (_name, make) => {
     expect(await battles.findById("missing")).toBeNull();
   });
 
+  it("finds the latest unfinished practice of a day", async () => {
+    const { battles } = await setup();
+    const at = (h: number) => new Date(`2026-10-12T${h}:00:00Z`);
+    await battles.create(record({ id: "p1", mode: "practice", startedAt: at(10) }));
+    await battles.create(record({ id: "p2", mode: "practice", startedAt: at(11) }));
+    await battles.create(record({ id: "p3", mode: "practice", startedAt: at(12), status: "abandoned" }));
+    await battles.create(record({ id: "d1" })); // daily, active
+    expect((await battles.findActivePractice("alice", "2026-10-12"))!.id).toBe("p2");
+    expect(await battles.findActivePractice("alice", "2026-10-13")).toBeNull();
+    expect(await battles.findActivePractice("bob", "2026-10-12")).toBeNull();
+  });
+
   it("allows only one daily per player per day, but any number of practices", async () => {
     const { battles } = await setup();
     await battles.create(record());

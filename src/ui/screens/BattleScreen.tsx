@@ -111,7 +111,7 @@ export function BattleScreen({ initial, onExit, onPractice }: Props) {
     <main className={styles.layout}>
       <div className={styles.page}>
         <header className={styles.hud}>
-          <Button variant="ghost" size="sm" icon={<BackIcon />} onClick={onExit} aria-label="Início">
+          <Button variant="ghost" size="sm" icon={<BackIcon />} onClick={onExit} aria-label="Início" title="Voltar ao início (a batalha continua de onde parou)">
             <span className={styles.hideNarrow}>Início</span>
           </Button>
           <div className={styles.hudCenter}>
@@ -199,8 +199,8 @@ export function BattleScreen({ initial, onExit, onPractice }: Props) {
           </h2>
           <p className={styles.partyHint}>
             {battle.mode === "daily"
-              ? "Na diária isso conta como derrota e encerra o desafio de hoje."
-              : "É só um treino: nada é registrado."}
+              ? "Desistir da diária conta como derrota na hora e encerra o desafio de hoje. Para só dar uma pausa, use Início: a batalha continua de onde parou."
+              : "O treino é encerrado e nada é registrado. Para só dar uma pausa, use Início: o treino continua de onde parou."}
           </p>
           <div className={styles.partyActions}>
             <Button variant="ghost" onClick={() => setForfeitOpen(false)}>

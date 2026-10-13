@@ -67,6 +67,8 @@ export interface BattleRepository {
   update(record: BattleRecord, expectedActionCount: number): Promise<void>;
   findById(id: string): Promise<BattleRecord | null>;
   findDaily(playerId: string, date: GameDate): Promise<BattleRecord | null>;
+  /** The player's unfinished practice battle of a date, if any (the latest one). */
+  findActivePractice(playerId: string, date: GameDate): Promise<BattleRecord | null>;
   /** Finished daily battles of one player, any date. */
   listDailyResults(playerId: string): Promise<BattleResult[]>;
   /** Finished daily battles played from one Discord server on one date. */

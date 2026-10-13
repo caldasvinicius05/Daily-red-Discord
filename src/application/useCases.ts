@@ -96,6 +96,8 @@ export interface TodayOverview {
     | { status: "available" }
     | { status: "active"; battleId: string }
     | { status: "finished"; battleId: string; result: BattleResult; shareText: string };
+  /** Unfinished practice battle of today, to resume. */
+  practice: { battleId: string } | null;
   stats: PlayerStats;
 }
 
@@ -221,8 +223,9 @@ export async function authenticateWithDiscord(
 export async function getToday(deps: Deps, playerId: string): Promise<TodayOverview> {
   const now = deps.clock.now();
   const date = toGameDate(now);
-  const [record, stats, championId] = await Promise.all([
+  const [record, practice, stats, championId] = await Promise.all([
     deps.battles.findDaily(playerId, date),
+    deps.battles.findActivePractice(playerId, date),
     playerStats(deps, playerId),
     championOfDay(deps, date),
   ]);
@@ -239,6 +242,7 @@ export async function getToday(deps: Deps, playerId: string): Promise<TodayOverv
     champions: CHAMPIONS.map(summarizeChampion),
     msUntilNext: msUntilNextDay(now),
     daily,
+    practice: practice ? { battleId: practice.id } : null,
     stats,
   };
 }
@@ -264,6 +268,10 @@ export async function startBattle(
     if (existing && existing.status !== "active") throw new AlreadyPlayedError();
     // Reopening the activity resumes the battle in progress; the lead was already chosen.
     if (existing) return getBattle(deps, { playerId: input.playerId, battleId: existing.id });
+  } else {
+    // One practice at a time: starting a new one closes the unfinished one (practice records nothing).
+    const unfinished = await deps.battles.findActivePractice(input.playerId, date);
+    if (unfinished) await forfeitBattle(deps, { playerId: input.playerId, battleId: unfinished.id });
   }
 
   const id = deps.ids.next();

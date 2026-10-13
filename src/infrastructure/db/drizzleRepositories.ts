@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, isNotNull, lte } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, lte } from "drizzle-orm";
 import { ConflictError } from "@/application/errors";
 import type {
   BattleRecord,
@@ -60,6 +60,14 @@ export class DrizzleBattleRepository implements BattleRepository {
   async findDaily(playerId: string, date: GameDate): Promise<BattleRecord | null> {
     const row = await this.db.query.battles.findFirst({
       where: and(eq(battles.playerId, playerId), eq(battles.date, date), eq(battles.mode, "daily")),
+    });
+    return row ? toRecord(row) : null;
+  }
+
+  async findActivePractice(playerId: string, date: GameDate): Promise<BattleRecord | null> {
+    const row = await this.db.query.battles.findFirst({
+      where: and(eq(battles.playerId, playerId), eq(battles.date, date), eq(battles.mode, "practice"), eq(battles.status, "active")),
+      orderBy: desc(battles.startedAt),
     });
     return row ? toRecord(row) : null;
   }

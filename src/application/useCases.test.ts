@@ -218,7 +218,7 @@ describe("practice", () => {
     const first = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "practice", leadIndex: 0 });
     const second = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "practice", leadIndex: 0 });
     expect(second.id).not.toBe(first.id);
-    const finished = await playToEnd(ALICE.id, first);
+    const finished = await playToEnd(ALICE.id, second);
     expect(finished.result).not.toBeNull();
     expect(finished.shareText).toBeNull();
     expect((await app.getPlayerStats(ALICE.id)).played).toBe(0);
@@ -393,5 +393,34 @@ describe("server summary", () => {
     expect(summary.championsDefeated).toBe(0);
     expect(summary.entries).toHaveLength(1);
     expect((await app.getServerSummary({ guildId: "other" })).streak).toBe(0);
+  });
+});
+
+describe("leaving and coming back", () => {
+  it("keeps an unfinished practice to resume from the home screen", async () => {
+    const started = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "practice", leadIndex: 2 });
+    const moved = await app.submitAction({ playerId: ALICE.id, battleId: started.id, action: nextAction(started.view) });
+    expect((await app.getToday(ALICE.id)).practice).toEqual({ battleId: started.id });
+    const resumed = await app.getBattle({ playerId: ALICE.id, battleId: started.id });
+    expect(resumed.view).toEqual(moved.view);
+  });
+
+  it("closes the unfinished practice when a new one starts, and forgets it once left", async () => {
+    const first = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "practice", leadIndex: 0 });
+    const second = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "practice", leadIndex: 1 });
+    expect((await battles.findById(first.id))!.status).toBe("abandoned");
+    expect((await app.getToday(ALICE.id)).practice).toEqual({ battleId: second.id });
+    await app.forfeitBattle({ playerId: ALICE.id, battleId: second.id });
+    expect((await app.getToday(ALICE.id)).practice).toBeNull();
+    expect((await app.getToday(ALICE.id)).stats.played).toBe(0);
+  });
+
+  it("counts leaving the daily as a loss right away", async () => {
+    const daily = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "daily", leadIndex: 0 });
+    await app.forfeitBattle({ playerId: ALICE.id, battleId: daily.id });
+    const today = await app.getToday(ALICE.id);
+    expect(today.daily.status).toBe("finished");
+    expect(today.stats.played).toBe(1);
+    expect(today.stats.wins).toBe(0);
   });
 });

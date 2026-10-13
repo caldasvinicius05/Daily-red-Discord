@@ -84,6 +84,18 @@ export function PartyPanel({ team, active, allowed, forced, onPick, onCancel }: 
                     <span className={styles.partyCellHp}>
                       {mon.fainted ? "desmaiado" : i === active ? "em campo" : `${mon.hp}/${mon.maxHp}`}
                     </span>
+                    <span className={styles.partyMoves}>
+                      {mon.moves.map((move) => (
+                        <span
+                          key={move.name}
+                          className={cx(styles.partyMove, move.pp === 0 && styles.partyMoveEmpty)}
+                          style={{ ["--move-color" as string]: typeColor(move.type) }}
+                          title={`${move.name} · ${TYPE_NAMES_PT[move.type] ?? move.type} · PP ${move.pp}/${move.maxPp}`}
+                        >
+                          {move.name}
+                        </span>
+                      ))}
+                    </span>
                   </span>
                 </button>
               </li>

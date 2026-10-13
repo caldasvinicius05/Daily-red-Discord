@@ -40,6 +40,13 @@ export class MemoryBattleRepository implements BattleRepository {
     return null;
   }
 
+  async findActivePractice(playerId: string, date: GameDate): Promise<BattleRecord | null> {
+    const found = [...this.records.values()]
+      .filter((r) => r.mode === "practice" && r.playerId === playerId && r.date === date && r.status === "active")
+      .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())[0];
+    return found ? structuredClone(found) : null;
+  }
+
   async listDailyResults(playerId: string): Promise<BattleResult[]> {
     return [...this.records.values()]
       .filter((r) => r.mode === "daily" && r.playerId === playerId && r.result)
