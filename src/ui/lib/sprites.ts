@@ -22,12 +22,12 @@ export function toSpriteSlug(species: string): string {
 /**
  * Returns the public sprite URL for a Pokémon.
  *
- * Sprites are hosted in `public/sprites/gen3/` and `public/sprites/gen3-back/`.
+ * Sprites are hosted in `public/sprites/gen5/` and `public/sprites/gen5-back/`.
  * Supports resolution by species name slug and Pokédex number (`num`).
  */
 export function getPokemonSprite(species: string, options?: SpriteOptions): string {
   const isBack = options?.side === "player" || options?.side === "back";
-  const folder = isBack ? "gen3-back" : "gen3";
+  const folder = isBack ? "gen5-back" : "gen5";
   const slug = toSpriteSlug(species);
   const fileName = slug || (options?.num ? `${options.num}` : "0");
   return `/sprites/${folder}/${fileName}.png`;

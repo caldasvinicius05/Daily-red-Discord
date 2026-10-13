@@ -6,8 +6,8 @@ O app funciona sem nenhum sprite: quando a imagem de um Pokémon não existe, `P
 
 ```
 public/sprites/
-├─ gen3/         frente (oponente, cards, times, listas)
-└─ gen3-back/    costas (o seu Pokémon na arena)
+├─ gen5/         frente (oponente, cards, times, listas)
+└─ gen5-back/    costas (o seu Pokémon na arena)
 ```
 
 Os nomes das pastas vêm de [`src/ui/lib/sprites.ts`](../src/ui/lib/sprites.ts). Se mudar o nome delas, mude também esse arquivo.
@@ -31,11 +31,11 @@ Se o arquivo pelo nome não existir, o app tenta pelo número da Pokédex (`445.
 - **PNG com fundo transparente.** O app não recorta fundo.
 - **Mesmo tamanho para todos** (ex.: 96×96 ou 80×80, como os sprites originais de GBA/DS), com o Pokémon centralizado e "pisando" perto da base da imagem. Tamanhos misturados ficam desalinhados na arena.
 - **Pixel art:** o app já desenha sem suavização; não precisa aumentar a imagem antes.
-- **Costas:** sem o sprite de costas, o seu Pokémon na arena cai no emblema. Se só tiver frente, dá para copiar o mesmo arquivo para `gen3-back/` como paliativo.
+- **Costas:** sem o sprite de costas, o seu Pokémon na arena cai no emblema. Se só tiver frente, dá para copiar o mesmo arquivo para `gen5-back/` como paliativo.
 
 ## Usando a pasta `assets/` (opcional)
 
-Se preferir guardar os originais em `assets/gen3` e `assets/gen3-back` (mesmos nomes de arquivo), `npm run sync-sprites` copia tudo para `public/sprites/` e cria também as cópias pelo número da Pokédex.
+Se preferir guardar os originais em `assets/gen5` e `assets/gen5-back` (mesmos nomes de arquivo), `npm run sync-sprites` copia tudo para `public/sprites/` e cria também as cópias pelo número da Pokédex.
 
 ## Publicar
 

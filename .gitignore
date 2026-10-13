@@ -20,6 +20,5 @@ next-env.d.ts
 Thumbs.db
 npm-debug.log*
 
-# sprites (removed from the repo; see docs/SPRITES.md)
+# sprites (raw source assets kept local; see docs/SPRITES.md)
 assets/
-public/sprites/
