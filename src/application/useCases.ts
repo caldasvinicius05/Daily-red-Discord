@@ -443,20 +443,18 @@ export async function getServerSummary(deps: Deps, input: { guildId: string; dat
 }
 
 /**
- * After a daily ends: posts the server's results in the Activity's channel, or edits
- * the message already posted today. Best effort — the battle result never depends on it.
+ * After each daily ends: posts a new results message, so it shows up at the bottom of
+ * the chat instead of getting lost above the conversation. Goes to the channel the
+ * player was in, or the one used last today. Best effort — the battle never depends on it.
  */
 async function announceDaily(deps: Deps, record: BattleRecord): Promise<void> {
   if (record.mode !== "daily" || !record.guildId) return;
   try {
-    const existing = await deps.announcements.get(record.guildId, record.date);
-    const channelId = existing?.channelId ?? record.channelId;
+    const channelId = record.channelId ?? (await deps.announcements.get(record.guildId, record.date))?.channelId;
     if (!channelId) return;
     const summary = await getServerSummary(deps, { guildId: record.guildId, date: record.date });
-    const posted = await deps.announcer.publish(summary, { channelId, messageId: existing?.messageId ?? null });
-    if (posted && (posted.messageId !== existing?.messageId || posted.channelId !== existing?.channelId)) {
-      await deps.announcements.save(record.guildId, record.date, posted);
-    }
+    const posted = await deps.announcer.publish(summary, channelId, record.playerId);
+    if (posted) await deps.announcements.save(record.guildId, record.date, posted);
   } catch (error) {
     console.warn("Não foi possível publicar o resultado do dia no Discord", error);
   }

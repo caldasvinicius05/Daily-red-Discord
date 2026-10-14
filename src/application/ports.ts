@@ -180,7 +180,7 @@ export interface ServerSummary {
   entries: LeaderboardEntry[];
 }
 
-/** Where a server's results message of a day was posted, so later results edit it. */
+/** Where a server's latest results message of a day was posted. */
 export interface DailyAnnouncement {
   channelId: string;
   messageId: string;
@@ -192,12 +192,12 @@ export interface DailyAnnouncementRepository {
 }
 
 /**
- * Posts a server's results of the day in a Discord channel (Wordle-style), or edits the
- * message posted earlier. Returns where the message is, or null when posting is not
- * possible (no bot token, missing permission...).
+ * Posts a new message with a server's results of the day in a Discord channel
+ * (Wordle-style), led by the player who just finished (`finishedBy`, a player id).
+ * Returns where it was posted, or null when posting is not possible (no bot token...).
  */
 export interface DailyAnnouncer {
-  publish(summary: ServerSummary, target: { channelId: string; messageId: string | null }): Promise<DailyAnnouncement | null>;
+  publish(summary: ServerSummary, channelId: string, finishedBy: string): Promise<DailyAnnouncement | null>;
 }
 
 // ---------- System ----------

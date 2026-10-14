@@ -22,7 +22,7 @@ Pokémon na batalha são identificados pela **posição no time** (`slot`, apeli
 
 Regras da **Gen 4**: a geração fica em `src/infrastructure/showdown/generation.ts` (`GEN`, `dex`); nada de `Dex.forGen(n)` espalhado. Pokémon sem sprite em `public/sprites/` caem no emblema por tipo (`PokemonEmblem`), então espécies novas funcionam antes dos sprites.
 
-Quando uma diária termina, `announceDaily` publica/edita a mensagem do dia no canal (port `DailyAnnouncer`, bot com `BOT_TOKEN`); falhas do Discord nunca quebram a batalha.
+Quando uma diária termina, `announceDaily` posta uma mensagem nova com o resultado no canal (uma por diária terminada) (port `DailyAnnouncer`, bot com `BOT_TOKEN`); falhas do Discord nunca quebram a batalha.
 
 Batalhas são **sem estado em memória**: guardar seed + ações e refazer no Showdown a cada requisição (`ShowdownBattleEngine.simulate`). A diária usa a mesma seed para todos.
 

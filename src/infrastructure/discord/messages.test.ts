@@ -55,8 +55,9 @@ describe("dailySummaryMessage", () => {
   };
 
   it("leads with the server streak and champions defeated, then today's top, Wordle style", () => {
-    const msg = dailySummaryMessage(summary, "https://app.example/card.png");
-    const lines = msg.content.split("\n");
+    const msg = dailySummaryMessage(summary, "https://app.example/card.png", "dev-bob");
+    expect(msg.content.split("\n")[0]).toBe("**Bob** perdeu para Lance. 💀 (3/6 derrubados)");
+    const lines = msg.content.split("\n").slice(2); // after the "who just finished" line
     expect(lines[0]).toBe("**O servidor está numa sequência de 7 dias!** 🔥");
     expect(lines[1]).toBe("Campeões derrotados no total: **12** 🏆");
     expect(lines[3]).toBe("Resultados de hoje contra **Lance**:");
@@ -65,6 +66,15 @@ describe("dailySummaryMessage", () => {
     expect(msg.embeds[0]!.image.url).toBe("https://app.example/card.png");
     expect(msg.components[0]!.components[0]).toMatchObject({ label: "Jogar agora!", custom_id: LAUNCH_BUTTON_ID });
     expect(msg.allowed_mentions.parse).toEqual([]);
+  });
+
+  it("leads with who just finished: win or forfeit", () => {
+    const first = (finishedBy: string, entries = summary.entries) =>
+      dailySummaryMessage({ ...summary, entries }, null, finishedBy).content.split("\n")[0];
+    expect(first("123456789012345678")).toBe("<@123456789012345678> venceu Lance! 🏆 (2/6 de pé · 21 turnos)");
+    expect(first("223456789012345678", [entry(1, "223456789012345678", "Carol", false, true)])).toBe(
+      "<@223456789012345678> desistiu contra Lance. 🏳️",
+    );
   });
 
   it("works without a card and on the first day of a streak", () => {

@@ -13,7 +13,7 @@ Todo mundo do servidor recebe **o mesmo time de seis Pokémon** a cada dia e tem
 - **Campeões:** Blue (time do Ginásio de Viridian em HeartGold/SoulSilver), Lance, Red, Steven, Wallace e Cynthia (time de Platinum), com sets competitivos validados nas regras da Gen 4. O campeão do dia é sorteado entre os que **ainda não apareceram na semana** (segunda a domingo) e fica guardado no banco. Com 6 campeões, todos aparecem uma vez e o domingo começa uma nova rodada, nunca repetindo o campeão do dia anterior. O campeão começa sempre com o primeiro Pokémon do time e escolhe golpes com base em cálculo de dano.
 - **Treino:** ilimitado, com o mesmo time do dia; o jogador escolhe o campeão (ou deixa no sorteio).
 - **Batalha:** motor do Pokémon Showdown com as regras da Gen 4 (cada golpe com sua categoria física/especial).
-- **Resultado no canal:** quando alguém termina a diária, o bot posta no canal da atividade uma mensagem no estilo do Wordle — sequência de dias do servidor, campeões derrotados no total, top do dia, um card com o resultado de cada jogador e o botão **Jogar agora!**. A mensagem é editada conforme mais gente termina (uma por servidor por dia).
+- **Resultado no canal:** cada vez que alguém termina a diária, o bot posta no canal da atividade uma mensagem nova no estilo do Wordle — quem acabou de jogar e como foi, sequência de dias do servidor, campeões derrotados no total, top do dia, um card com o resultado de cada jogador e o botão **Jogar agora!**. Assim o resultado não se perde no meio da conversa.
 
 ## Versões
 

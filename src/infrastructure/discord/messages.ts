@@ -55,15 +55,25 @@ function rankMark(rank: number, first = MEDALS[0]!): string {
   return MEDALS[rank - 1] ?? `\`${rank}.\``;
 }
 
-const plural =(n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** "**Alice** venceu Cynthia! 🏆" — the news that triggered the message. */
+function finishedLine(entry: LeaderboardEntry, champion: ChampionSummary): string {
+  const { result } = entry;
+  const details = describe(entry).split(" · ").slice(1).join(" · ");
+  if (result.abandoned) return `${who(entry)} desistiu contra ${champion.name}. 🏳️`;
+  if (result.won) return `${who(entry)} venceu ${champion.name}! 🏆 (${details})`;
+  return `${who(entry)} perdeu para ${champion.name}. 💀 (${details})`;
+}
 
 /**
- * The Wordle-style message posted in the Activity's channel when someone finishes the
- * daily (and edited as more people finish): server streak, all-time champions defeated,
- * today's top players, the results card and a button that opens the Activity.
+ * The Wordle-style message posted in the Activity's channel each time someone finishes
+ * the daily: who just played, server streak, all-time champions defeated, today's top
+ * players, the results card and a button that opens the Activity.
  */
-export function dailySummaryMessage(summary: ServerSummary, cardUrl: string | null) {
+export function dailySummaryMessage(summary: ServerSummary, cardUrl: string | null, finishedBy?: string) {
   const { champion, entries } = summary;
+  const finished = entries.find((e) => e.player.id === finishedBy);
   const headline =
     summary.streak > 1
       ? `**O servidor está numa sequência de ${plural(summary.streak, "dia", "dias")}!** 🔥`
@@ -75,7 +85,14 @@ export function dailySummaryMessage(summary: ServerSummary, cardUrl: string | nu
   if (top.length === 0) top.push(`Ninguém deste servidor enfrentou ${champion.name} hoje ainda.`);
 
   return {
-    content: [headline, defeated, "", `Resultados de hoje contra **${champion.name}**:`, ...top].join("\n"),
+    content: [
+      ...(finished ? [finishedLine(finished, champion), ""] : []),
+      headline,
+      defeated,
+      "",
+      `Resultados de hoje contra **${champion.name}**:`,
+      ...top,
+    ].join("\n"),
     allowed_mentions: { parse: [] as string[] },
     embeds: cardUrl
       ? [

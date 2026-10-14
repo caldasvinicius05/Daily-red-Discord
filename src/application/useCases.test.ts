@@ -45,14 +45,14 @@ const teams = new ShowdownTeamFactory();
 let now: Date;
 let battles: BattleRepository;
 let app: UseCases;
-/** What the fake bot was asked to post or edit, in order. */
-let published: { summary: ServerSummary; channelId: string; messageId: string | null }[];
+/** What the fake bot was asked to post, in order. */
+let published: { summary: ServerSummary; channelId: string; finishedBy: string }[];
 
-/** Fake bot: posts message "msg-N" the first time, then edits it. */
+/** Fake bot: every post is a new message "msg-N". */
 const fakeAnnouncer: DailyAnnouncer = {
-  publish: async (summary, target) => {
-    published.push({ summary, ...target });
-    return { channelId: target.channelId, messageId: target.messageId ?? `msg-${published.length}` };
+  publish: async (summary, channelId, finishedBy) => {
+    published.push({ summary, channelId, finishedBy });
+    return { channelId, messageId: `msg-${published.length}` };
   },
 };
 
@@ -335,20 +335,31 @@ describe("practice champion choice", () => {
 });
 
 describe("daily results message", () => {
-  it("is posted in the channel when the first daily ends, then edited as others finish", async () => {
+  it("is posted again, as a new message, every time someone finishes the daily", async () => {
     const a = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "daily", leadIndex: 0, channelId: "chan-1" });
     await playToEnd(ALICE.id, a);
     expect(published).toHaveLength(1);
-    expect(published[0]).toMatchObject({ channelId: "chan-1", messageId: null });
+    expect(published[0]).toMatchObject({ channelId: "chan-1", finishedBy: ALICE.id });
     expect(published[0]!.summary).toMatchObject({ guildId: GUILD, date: "2026-10-12", streak: 1 });
     expect(published[0]!.summary.entries.map((e) => e.player.id)).toEqual([ALICE.id]);
 
-    // Bob plays from another channel: the same message is edited, where it was posted.
+    // Bob plays from another channel: a new message there, with everyone's results.
     const b = await app.startBattle({ playerId: BOB.id, guildId: GUILD, mode: "daily", leadIndex: 1, channelId: "chan-2" });
     await app.forfeitBattle({ playerId: BOB.id, battleId: b.id });
     expect(published).toHaveLength(2);
-    expect(published[1]).toMatchObject({ channelId: "chan-1", messageId: "msg-1" });
+    expect(published[1]).toMatchObject({ channelId: "chan-2", finishedBy: BOB.id });
     expect(published[1]!.summary.entries).toHaveLength(2);
+  });
+
+  it("goes to the channel used last today when the player has none", async () => {
+    const a = await app.startBattle({ playerId: ALICE.id, guildId: GUILD, mode: "daily", leadIndex: 0, channelId: "chan-1" });
+    await app.forfeitBattle({ playerId: ALICE.id, battleId: a.id });
+    const b = await app.startBattle({ playerId: BOB.id, guildId: GUILD, mode: "daily", leadIndex: 0 });
+    await app.forfeitBattle({ playerId: BOB.id, battleId: b.id });
+    expect(published.map((p) => [p.channelId, p.finishedBy])).toEqual([
+      ["chan-1", ALICE.id],
+      ["chan-1", BOB.id],
+    ]);
   });
 
   it("is not posted for practice, outside a server or without a channel", async () => {
