@@ -95,6 +95,13 @@
   .turn {
     font-size: 14px;
   }
+  /* Room for the music and forfeit buttons; the champion is named in the arena. */
+  .vsChampion {
+    display: none;
+  }
+  .hudRight {
+    gap: 0;
+  }
 }
 
 /* ============================================================

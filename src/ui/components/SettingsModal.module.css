@@ -124,3 +124,29 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.volume {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding-left: 54px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.volume input {
+  flex: 1;
+  accent-color: var(--ice);
+}
+
+.volume input:disabled {
+  opacity: 0.4;
+}
+
+.volume strong {
+  width: 40px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}

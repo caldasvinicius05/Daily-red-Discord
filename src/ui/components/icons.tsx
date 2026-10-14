@@ -91,3 +91,20 @@ export const FastIcon = (p: P) => (
     <path d="M4 6l7 6-7 6zM13 6l7 6-7 6z" />
   </svg>
 );
+
+export const MusicIcon = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M9 18V5l11-2v13" />
+    <circle cx="6" cy="18" r="3" />
+    <circle cx="17" cy="16" r="3" />
+  </svg>
+);
+
+export const MusicOffIcon = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M9 18V5l11-2v13" />
+    <circle cx="6" cy="18" r="3" />
+    <circle cx="17" cy="16" r="3" />
+    <path d="M3 3l18 18" />
+  </svg>
+);

@@ -9,10 +9,14 @@ export interface Settings {
   speed: BattleSpeed;
   /** Show "super effective" hints on move buttons (Gen 7+ style). */
   hints: boolean;
+  /** Champion theme during battles. */
+  music: boolean;
+  /** 0–1. Low by default: people are usually in a voice call. */
+  musicVolume: number;
 }
 
 const KEY = "dailyred.settings";
-const DEFAULTS: Settings = { speed: "normal", hints: true };
+const DEFAULTS: Settings = { speed: "normal", hints: true, music: true, musicVolume: 0.3 };
 
 let current: Settings = DEFAULTS;
 let loaded = false;

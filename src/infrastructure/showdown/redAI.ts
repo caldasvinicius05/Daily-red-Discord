@@ -1,6 +1,7 @@
 import { calculate, Field, Generations, Move, Pokemon as CalcPokemon } from "@smogon/calc";
 import type { Battle, Pokemon } from "pokemon-showdown";
 import { GEN } from "./generation";
+import { moveIdentity } from "./moves";
 import { isForcedSwitch, moveOptions } from "./requests";
 
 const gen = Generations.get(GEN);
@@ -66,7 +67,7 @@ function scoreMove(battle: Battle, self: Pokemon, foe: Pokemon, moveId: string):
   const accuracy = move.accuracy === true ? 1 : move.accuracy / 100;
 
   if (move.category !== "Status") {
-    const { fraction, surelyKOs } = damage(battle, self, foe, move.name);
+    const { fraction, surelyKOs } = damage(battle, self, foe, moveIdentity(self, moveId).name);
     let score = fraction * 100 * accuracy;
     if (surelyKOs) score += 100 * accuracy;
     // Priority finishes the job before a faster foe can hit back.

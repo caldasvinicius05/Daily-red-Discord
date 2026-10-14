@@ -29,6 +29,22 @@ function playToEnd(s: BattleSetup): { actions: PlayerAction[]; snapshot: ReturnT
 }
 
 describe("ShowdownBattleEngine", () => {
+  it("shows Hidden Power with its real type, as the UI and the champion's AI need it", () => {
+    const team = teams.dailyTeam("2026-10-12");
+    team[0] = {
+      species: "Ampharos",
+      item: "Life Orb",
+      ability: "Static",
+      nature: "Modest",
+      evs: { hp: 4, spa: 252, spe: 252 },
+      ivs: { spe: 30 },
+      moves: ["Thunderbolt", "Hidden Power Ice", "Focus Blast", "Substitute"],
+    };
+    const { view } = engine.simulate({ ...setup, team, championId: "cynthia" }, []);
+    expect(view.choices.moves[1]).toMatchObject({ name: "Hidden Power Ice", type: "Ice" });
+    expect(view.player.team[0]!.moves[1]).toMatchObject({ name: "Hidden Power Ice", type: "Ice" });
+  });
+
   it("opens with both leads on the field and asks for a move", () => {
     const { view, steps, outcome } = engine.simulate(setup, []);
     expect(outcome).toBeNull();

@@ -11,9 +11,11 @@ import { MessageBox } from "../battle/MessageBox";
 import { MovePanel } from "../battle/MovePanel";
 import { PartyPanel } from "../battle/PartyPanel";
 import { ResultOverlay } from "../battle/ResultOverlay";
+import { useBattleMusic } from "../battle/useBattleMusic";
 import { usePlayback } from "../battle/usePlayback";
-import { BackIcon, FastIcon, FlagIcon } from "../components/icons";
+import { BackIcon, FastIcon, FlagIcon, MusicIcon, MusicOffIcon } from "../components/icons";
 import { Button, cx, Modal } from "../components/ui";
+import { championTheme } from "../lib/music";
 import { updateSettings, useSettings } from "../lib/settings";
 import styles from "../battle/battle.module.css";
 
@@ -52,6 +54,8 @@ export function BattleScreen({ initial, onExit, onPractice }: Props) {
   const idle = !playback.playing && !submitting;
   const ended = view.phase === "ended" || Boolean(battle.result);
   const forcedSwitch = idle && !ended && view.phase === "switch";
+  // The champion's theme plays until the result screen shows up.
+  useBattleMusic(championTheme(battle.champion.id), !showResult);
   const activeMon = view.player.team[view.player.active];
 
   const act = async (action: PlayerAction) => {
@@ -132,6 +136,14 @@ export function BattleScreen({ initial, onExit, onPractice }: Props) {
             >
               <span className={styles.hideNarrow}>{settings.speed === "normal" ? "1×" : settings.speed === "fast" ? "2×" : "∞"}</span>
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label={settings.music ? "Desligar música" : "Ligar música"}
+              title={settings.music ? "Desligar música" : "Ligar música"}
+              icon={settings.music ? <MusicIcon /> : <MusicOffIcon />}
+              onClick={() => updateSettings({ music: !settings.music })}
+            />
             {!ended && (
               <Button variant="danger" size="sm" aria-label="Desistir" icon={<FlagIcon />} onClick={() => setForfeitOpen(true)} disabled={!idle}>
                 <span className={styles.hideNarrow}>Desistir</span>

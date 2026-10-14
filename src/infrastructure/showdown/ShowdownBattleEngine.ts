@@ -12,9 +12,10 @@ import {
 } from "@/domain";
 import { createRandom, hashSeed } from "@/domain/rules/random";
 import { slotFromNickname, slotNickname, translateLog, toPercent, type LogContext } from "./logParser";
+import { moveIdentity } from "./moves";
 import { chooseRedAction } from "./redAI";
 import { isForcedSwitch, moveOptions } from "./requests";
-import { dex, GEN } from "./generation";
+import { GEN } from "./generation";
 import { toShowdownSet } from "./teams";
 
 const FORMAT = `gen${GEN}customgame`;
@@ -142,8 +143,7 @@ export class ShowdownBattleEngine implements BattleEngine {
         fainted: p.fainted,
         boosts: boostsOf(p),
         moves: p.moveSlots.map((moveSlot) => ({
-          name: moveSlot.move,
-          type: dex.moves.get(moveSlot.id).type,
+          ...moveIdentity(p, moveSlot.id),
           pp: moveSlot.pp,
           maxPp: moveSlot.maxpp,
         })),
@@ -155,8 +155,7 @@ export class ShowdownBattleEngine implements BattleEngine {
       const moveSlot = battle.p1.active[0]?.moveSlots.find((s) => s.id === option.id);
       return {
         index,
-        name: option.move,
-        type: dex.moves.get(option.id).type,
+        ...moveIdentity(battle.p1.active[0], option.id),
         pp: moveSlot?.pp ?? 0,
         maxPp: moveSlot?.maxpp ?? 0,
         disabled: Boolean(option.disabled),

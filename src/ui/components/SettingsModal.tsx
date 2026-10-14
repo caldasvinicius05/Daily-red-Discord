@@ -47,6 +47,30 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
         </label>
       </section>
 
+      <section className={styles.group}>
+        <label className={styles.toggle}>
+          <input type="checkbox" checked={settings.music} onChange={(e) => updateSettings({ music: e.target.checked })} />
+          <span className={styles.switch} />
+          <span>
+            <strong>Música</strong>
+            <small>Tema do campeão durante a batalha.</small>
+          </span>
+        </label>
+        <label className={styles.volume}>
+          <span>Volume</span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={5}
+            value={Math.round(settings.musicVolume * 100)}
+            disabled={!settings.music}
+            onChange={(e) => updateSettings({ musicVolume: Number(e.target.value) / 100 })}
+          />
+          <strong>{Math.round(settings.musicVolume * 100)}%</strong>
+        </label>
+      </section>
+
       <p className={styles.note}>Essas preferências ficam salvas só neste dispositivo.</p>
 
       <div className={styles.actions}>
