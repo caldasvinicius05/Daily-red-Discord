@@ -8,7 +8,7 @@ Todo mundo do servidor recebe **o mesmo time de seis Pokémon** a cada dia e tem
 
 ## Como funciona
 
-- **Time do dia:** uma seed baseada na data sorteia 6 Pokémon entre os 228 em forma final das gerações 1 a 4 (sem lendários), com sets competitivos gerados pelo gerador da Gen 4 do Showdown, todos no nível 100. Pokémon que ganharam evolução na Gen 4 aparecem já evoluídos (Murkrow → Honchkrow, Electabuzz → Electivire). Itens que prendem num golpe só (Choice Band, Specs e Scarf) viram Leftovers. O "dia" segue o horário de São Paulo, então todos do servidor estão sempre no mesmo desafio.
+- **Time do dia:** uma seed baseada na data sorteia 6 Pokémon entre os 227 em forma final das gerações 1 a 4 (sem lendários), cada um com um **set do Smogon** para singles da Gen 4 (golpes, item, habilidade, natureza, EVs e IVs), todos no nível 100. Sets com item Choice só são usados quando a espécie não tem outro. Pokémon que ganharam evolução na Gen 4 aparecem já evoluídos (Murkrow → Honchkrow, Electabuzz → Electivire). Itens que prendem num golpe só (Choice Band, Specs e Scarf) viram Leftovers. O "dia" segue o horário de São Paulo, então todos do servidor estão sempre no mesmo desafio.
 - **Mesma sorte para todos:** a diária usa a mesma seed de batalha para todo mundo — quem fizer as mesmas escolhas tem exatamente o mesmo resultado.
 - **Campeões:** Blue (time do Ginásio de Viridian em HeartGold/SoulSilver), Lance, Red, Steven, Wallace e Cynthia (time de Platinum), com sets competitivos validados nas regras da Gen 4. O campeão do dia é sorteado entre os que **ainda não apareceram na semana** (segunda a domingo) e fica guardado no banco. Com 6 campeões, todos aparecem uma vez e o domingo começa uma nova rodada, nunca repetindo o campeão do dia anterior. O campeão começa sempre com o primeiro Pokémon do time e escolhe golpes com base em cálculo de dano.
 - **Treino:** ilimitado, com o mesmo time do dia; o jogador escolhe o campeão (ou deixa no sorteio).
@@ -23,6 +23,7 @@ Todo mundo do servidor recebe **o mesmo time de seis Pokémon** a cada dia e tem
 | 2.0 | Daily Champion | Campeões das gerações 1 a 3 com rodízio semanal, pool com todas as formas finais |
 | 2.1 | Daily Battle | Um único time do Blue (Viridian, HGSS), sem Choice Band no time do jogador, tipos visíveis na troca |
 | 3.0 | Daily Battle | Gen 4: Cynthia, pool até Arceus com evoluções da Gen 4, escolha do campeão no treino, mensagem de resultado estilo Wordle |
+| 3.1 | Daily Battle | Time do jogador com sets reais do Smogon (EVs, naturezas, IVs e golpes competitivos), treino que continua de onde parou |
 
 ## Funcionalidades
 
@@ -138,11 +139,13 @@ Cada push na branch `master` gera um novo deploy automaticamente. O login de tes
 | `npm run db:generate` | Gera uma nova migration a partir do schema |
 | `npm run tunnel` | Túnel HTTPS para testar no Discord |
 | `npm run register-commands` | Registra/atualiza o comando `/dailybattle` |
+| `npm run update-sets` | Atualiza os sets competitivos do Smogon usados no time do dia |
 
 ## Personalizando
 
 - **Campeões e seus sets:** [`src/domain/data/champions.ts`](src/domain/data/champions.ts). Os sets são validados pelo próprio Showdown nos testes (`npm test`). Ao mudar sets ou regras do pool, aumente `DATA_VERSION`.
 - **Pool do jogador:** [`src/infrastructure/showdown/ShowdownTeamFactory.ts`](src/infrastructure/showdown/ShowdownTeamFactory.ts) (formas finais até a Gen 4, sem lendários).
+- **Sets do jogador:** `npm run update-sets` baixa os sets do Smogon (export JSON do projeto [pkmn](https://github.com/pkmn/smogon)), valida cada um no Showdown e grava em `src/infrastructure/showdown/data/smogon-sets.gen4.json`. Depois de atualizar, aumente `DATA_VERSION`.
 - **Geração das regras:** [`src/infrastructure/showdown/generation.ts`](src/infrastructure/showdown/generation.ts) (`GEN` e último número da Pokédex).
 - **Mensagem e card do resultado:** [`src/infrastructure/discord/messages.ts`](src/infrastructure/discord/messages.ts) e [`src/app/api/_lib/ResultsCard.tsx`](src/app/api/_lib/ResultsCard.tsx).
 - **Rodízio dos campeões:** [`src/domain/rules/championRotation.ts`](src/domain/rules/championRotation.ts).

@@ -1,6 +1,6 @@
 {
   "name": "daily-red-activity",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -14,7 +14,8 @@
     "db:migrate": "drizzle-kit migrate",
     "tunnel": "cloudflared tunnel --url http://localhost:3000",
     "register-commands": "node scripts/register-commands.ts",
-    "sync-sprites": "node scripts/sync-sprites.ts"
+    "sync-sprites": "node scripts/sync-sprites.ts",
+    "update-sets": "node scripts/update-smogon-sets.ts"
   },
   "dependencies": {
     "@discord/embedded-app-sdk": "^2.5.0",

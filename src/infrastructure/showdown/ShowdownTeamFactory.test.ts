@@ -1,6 +1,12 @@
+import { TeamValidator } from "pokemon-showdown";
 import { describe, expect, it } from "vitest";
-import { addDays } from "@/domain";
+import { addDays, type PokemonSet } from "@/domain";
 import { ShowdownTeamFactory } from "./ShowdownTeamFactory";
+
+const validator = TeamValidator.get("gen4ubers");
+const full = (stats: object | undefined, fill: number) => ({ hp: fill, atk: fill, def: fill, spa: fill, spd: fill, spe: fill, ...stats });
+const validate = (set: PokemonSet) =>
+  validator.validateTeam([{ ...set, name: set.species, evs: full(set.evs, 0), ivs: full(set.ivs, 31), level: 100, gender: "" }] as never) ?? [];
 
 const factory = new ShowdownTeamFactory();
 const days = Array.from({ length: 120 }, (_, i) => addDays("2026-10-12", i));
@@ -8,14 +14,15 @@ const days = Array.from({ length: 120 }, (_, i) => addDays("2026-10-12", i));
 describe("ShowdownTeamFactory", () => {
   it("draws from fully evolved, non-legendary Pokémon up to Gen 4", () => {
     const pool = factory.poolSpecies();
-    expect(pool).toHaveLength(228);
+    expect(pool).toHaveLength(227);
     expect(pool).toContain("Raichu");
     expect(pool).not.toContain("Pikachu"); // evolves; exclusive to Red
     expect(pool).not.toContain("Charmeleon");
     expect(pool).not.toContain("Mewtwo");
     expect(pool).not.toContain("Arceus");
     expect(pool).toContain("Garchomp");
-    expect(pool).not.toContain("Unown"); // no competitive sets
+    expect(pool).not.toContain("Unown"); // a single move
+    expect(pool).not.toContain("Ditto"); // a single move
   });
 
   it("replaces Pokémon that gained an evolution in Gen 4 by that evolution", () => {
@@ -41,6 +48,17 @@ describe("ShowdownTeamFactory", () => {
     const items = days.flatMap((day) => factory.dailyTeam(day).map((set) => set.item));
     for (const choice of ["Choice Band", "Choice Specs", "Choice Scarf"]) expect(items).not.toContain(choice);
     expect(items).toContain("Leftovers");
+  });
+
+  it("builds every Pokémon competitively: legal Smogon sets with full EVs and a chosen nature", () => {
+    for (const day of days.slice(0, 40)) {
+      for (const set of factory.dailyTeam(day)) {
+        expect(validate(set), `${day} ${set.species}`).toEqual([]);
+        const evs = Object.values(set.evs).reduce((a, b) => a + (b ?? 0), 0);
+        expect(evs, `${day} ${set.species}`).toBeGreaterThanOrEqual(480);
+        expect(set.moves.length).toBeGreaterThanOrEqual(2);
+      }
+    }
   });
 
   it("builds playable sets: six distinct species, 1–4 moves each", () => {

@@ -4,7 +4,7 @@ import type { Champion, PokemonSet } from "../entities";
  * Bump when champions' sets or the player pool rules change: it is mixed into battle
  * seeds, so old saved battles stay tied to the data they were played with.
  */
-export const DATA_VERSION = 3;
+export const DATA_VERSION = 4;
 
 const physical = { hp: 4, atk: 252, spe: 252 };
 const special = { hp: 4, spa: 252, spe: 252 };
